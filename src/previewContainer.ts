@@ -1,4 +1,3 @@
-import {PythonResult, UserError} from "arepl-backend"
 import * as vscode from "vscode"
 import PythonInlinePreview from "./pythonInlinePreview"
 import PythonPanelPreview from "./pythonPanelPreview"
@@ -38,7 +37,7 @@ export class PreviewContainer{
         this.printResults = []
     }
 
-    public handleResult(pythonResults: PythonResult){
+    public handleResult(pythonResults: any){
 
         console.debug(`Exec time: ${pythonResults.execTime}`)
         console.debug(`Python time: ${pythonResults.totalPyTime}`)
@@ -61,7 +60,7 @@ export class PreviewContainer{
         this.pythonPanelPreview.showTrace(trace)
     }
 
-    public updateError(userError: UserError, userErrorMsg: string, refresh: boolean){
+    public updateError(userError: any, userErrorMsg: string, refresh: boolean){
         const cachedSettings = settings()
         if(!cachedSettings.get('showNameErrors')){
             if(userError?.exc_type?.["py/type"]?.includes("NameError")){
@@ -89,7 +88,7 @@ export class PreviewContainer{
      * user may dump var(s), which we format into readable output for user
      * @param pythonResults result with either "dump output" key or caller and lineno
      */
-    private updateVarsWithDumpOutput(pythonResults: PythonResult){
+    private updateVarsWithDumpOutput(pythonResults: any){
         const lineKey = "line " + pythonResults.lineno
         if(pythonResults.userVariables["dump output"] != undefined){
             const dumpOutput = pythonResults.userVariables["dump output"]

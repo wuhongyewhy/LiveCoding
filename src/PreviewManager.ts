@@ -1,5 +1,4 @@
 "use strict"
-import {PythonEvaluator, ExecArgs} from "arepl-backend"
 import livecode2Utils from "./livecodeUtilities"
 import * as vscode from "vscode"
 import { EnvironmentVariablesProvider } from "./env/variables/environmentVariablesProvider"
@@ -10,7 +9,6 @@ import * as os from "os"
 import { spawn, ChildProcess } from "child_process"
 import { PreviewContainer } from "./previewContainer"
 import Reporter from "./telemetry"
-import {ToAREPLLogic} from "./toAREPLLogic"
 import { PythonShell } from "python-shell"
 import {settings} from "./settings"
 import printDir from "./printDir";
@@ -28,9 +26,8 @@ export default class PreviewManager {
     reporter: Reporter;
     disposable: vscode.Disposable;
     pythonEditorDoc: vscode.TextDocument;
-    PythonEvaluator: PythonEvaluator;
     runningStatus: vscode.StatusBarItem;
-    tolivecodeLogic: ToAREPLLogic
+    tolivecodeLogic: any
     previewContainer: PreviewContainer
     subscriptions: vscode.Disposable[] = []
     highlightDecorationType: vscode.TextEditorDecorationType
@@ -98,7 +95,7 @@ export default class PreviewManager {
         panel.onDidDispose(()=>this.dispose(), this, this.subscriptions)
         this.subscriptions.push(panel)
 
-        this.startAndBindPython()
+        // only space_tracer is used now – no AREPL backend startup
 
         if(this.pythonEditorDoc.isUntitled && this.pythonEditorDoc.getText() == "") {
             await livecode2Utils.insertDefaultImports(this.pythonEditor)
@@ -178,7 +175,9 @@ export default class PreviewManager {
     }
 
     runlivecode(){
-        this.onAnyDocChange(this.pythonEditorDoc)
+        if(this.pythonEditorDoc){
+            this.runSpaceTracerForDoc(this.pythonEditorDoc)
+        }
     }
 
     /**
@@ -198,51 +197,13 @@ export default class PreviewManager {
     }
 
     runlivecodeBlock() {
-        const editor = vscode.window.activeTextEditor
-        const selection = editor.selection
-        let block: vscode.Range = null;
-
-        if(selection.isEmpty){ // just a cursor
-            block = vscodeUtils.getBlockOfText(editor, selection.start.line)
+        if(this.pythonEditorDoc){
+            this.runSpaceTracerForDoc(this.pythonEditorDoc)
         }
-        else{
-            block = new vscode.Range(selection.start, selection.end)
-        }
-           
-        let codeLines = editor.document.getText(block)
-        // hack: we want accurate line # info
-        // so we prepend lines to put codeLines in right spot
-        codeLines = vscodeUtils.eol(editor.document).repeat(block.start.line) + codeLines
-        const filePath = editor.document.isUntitled ? "" : editor.document.fileName
-        const settingsCached = settings()
-        const data: ExecArgs = {
-            evalCode: codeLines,
-            filePath,
-            savedCode: '',
-            usePreviousVariables: true,
-            showGlobalVars: settingsCached.get<boolean>('showGlobalVars'),
-            default_filter_vars: settingsCached.get<string[]>('defaultFilterVars'),
-            default_filter_types: settingsCached.get<string[]>('defaultFilterTypes')
-        }
-        this.PythonEvaluator.execCode(data)
-        this.runningStatus.show()
-
-        if(editor){
-            editor.setDecorations(this.highlightDecorationType, [block])
-        }
-
-        setTimeout(()=>{
-            // clear decorations
-            editor.setDecorations(this.highlightDecorationType, [])
-        }, 100)
     }
 
     dispose() {
         vscode.commands.executeCommand("setContext", "livecode2", false)
-
-        if(this.PythonEvaluator.pyshell != null && this.PythonEvaluator.pyshell.childProcess != null){
-            this.PythonEvaluator.stop()
-        }
 
         this.disposable = vscode.Disposable.from(...this.subscriptions);
         this.disposable.dispose();
@@ -357,72 +318,7 @@ export default class PreviewManager {
         const curline = editor.visibleRanges[0].start.line
         panel.webview.postMessage({ line: curline })
     }
-    /**
-     * starts livecode python backend and binds print&result output to the handlers
-     */
-    private async startAndBindPython(){
-        const pythonPath = livecode2Utils.getPythonPath()
-        const pythonOptions = settings().get<string[]>("pythonOptions")
-
-        this.warnIfOutdatedPythonVersion(pythonPath)
-
-        // basically all this does is load a file.. why does it need to be async *sob*
-        const env = await this.loadAndWatchEnvVars()
-
-        this.PythonEvaluator = new PythonEvaluator({
-            pythonOptions,
-            pythonPath,
-            env,
-        })
-        
-        try {
-            this.PythonEvaluator.start()
-        } catch (err) {
-            if (err instanceof Error){
-                const error = `Error running python with command: ${pythonPath} ${pythonOptions.join(' ')}\n${err.stack}`
-                this.previewContainer.displayProcessError(error);
-                // @ts-ignore 
-                this.reporter.sendError(err, error.errno, 'spawn')            
-            }
-            else{
-                console.error(err)
-            }
-        }
-        this.PythonEvaluator.pyshell.childProcess.on("error", (err: NodeJS.ErrnoException) => {
-            /* The 'error' event is emitted whenever:
-            The process could not be spawned, or
-            The process could not be killed, or
-            Sending a message to the child process failed.
-            */
-
-            // @ts-ignore err is actually SystemError but node does not type it
-            const error = `Error running python with command: ${err.path} ${err.spawnargs.join(' ')}\n${err.stack}`
-            this.previewContainer.displayProcessError(error);
-            this.reporter.sendError(err, err.errno, 'spawn')
-        })
-        this.PythonEvaluator.pyshell.childProcess.on("exit", err => {
-            if(!err) return // normal exit
-            this.previewContainer.displayProcessError(`err code: ${err}`);
-            this.reporter.sendError(new Error('exit'), err, 'spawn')
-        })
-
-        this.tolivecodeLogic = new ToAREPLLogic(this.PythonEvaluator, this.previewContainer)
-
-        // binding this to the class so it doesn't get overwritten by PythonEvaluator
-        this.PythonEvaluator.onPrint = this.previewContainer.handlePrint.bind(this.previewContainer)
-        // this is bad - stderr should be handled seperately so user is aware its different
-        // but better than not showing stderr at all, so for now printing it out and ill fix later
-        this.PythonEvaluator.onStderr = this.previewContainer.handlePrint.bind(this.previewContainer)
-        this.PythonEvaluator.onResult = result => {
-            this.runningStatus.hide()
-            this.previewContainer.handleResult(result)
-            
-
-
-        }
-
-
-    }
+    // legacy AREPL backend startup removed – livecode2 now uses space_tracer only
 
     /**
      * binds various funcs to activate upon edit of document / switching of active doc / etc...

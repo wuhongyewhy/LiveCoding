@@ -1,6 +1,5 @@
 import * as vscode from "vscode"
 import Reporter from "./telemetry"
-import { UserError, FrameSummary } from "arepl-backend";
 import Utilities, {DefaultDict} from "./utilities";
 
 /**
@@ -19,7 +18,7 @@ export default class PythonInlinePreview{
     /**
      * Safe - catches and logs any exceptions
      */
-    public showInlineErrors(error: UserError, userErrorMsg: string){
+    public showInlineErrors(error: any, userErrorMsg: string){
         try {
 
             if(userErrorMsg.includes("AREPL has ran into an error")){
@@ -50,7 +49,7 @@ export default class PythonInlinePreview{
         throw Error('not implemented')
     }
 
-    private convertFrameToDecorationOption(frame: FrameSummary): vscode.DecorationOptions{
+    private convertFrameToDecorationOption(frame: any): vscode.DecorationOptions{
         const lineNum = frame.lineno-1 // python trace uses 1-based indexing but vscode lines start at 0
         // todo: pull endCharNum from relevant line from file
         // remember that the file might not be the active doc...
@@ -73,7 +72,7 @@ export default class PythonInlinePreview{
     /**
      * converts error to dictionary of error decorations indexed by filename
      */
-    private convertErrorToDecorationOptions(error: UserError): Record<string, vscode.DecorationOptions[]>{
+    private convertErrorToDecorationOptions(error: any): Record<string, vscode.DecorationOptions[]>{
         const decorations = new DefaultDict(Array)
 
         if(Utilities.isEmpty(error)) return {'<string>': []};

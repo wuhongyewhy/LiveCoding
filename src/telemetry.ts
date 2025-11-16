@@ -1,12 +1,10 @@
-import { Buffer } from "buffer";
-import { extensions, WorkspaceConfiguration } from "vscode";
-import TelemetryReporter from "vscode-extension-telemetry";
+import { WorkspaceConfiguration } from "vscode";
 import { userInfo } from "os";
 import { sep } from "path";
 import livecode2Utils from "./livecodeUtilities";
 
 export default class Reporter{
-    private reporter: TelemetryReporter
+    private reporterEnabled: boolean
     private timeOpened: number
     private lastStackTrace: string
     numRuns: number
@@ -17,32 +15,18 @@ export default class Reporter{
     pythonVersion: string
 
     constructor(private enabled: boolean){
-        const extensionId = "xirider.livecode2";
-        const extension = extensions.getExtension(extensionId)!;
-        const extensionVersion = extension.packageJSON.version;
-
-        // following key just allows you to send events to azure insights API
-        // so it does not need to be protected
-        // but obfuscating anyways - bots scan github for keys, but if you want my key you better work for it, damnit!
-        const innocentKitten = Buffer.from("NWYzMWNjNDgtNTA2OC00OGY4LWFjMWMtZDRkY2Y3ZWFhMTM1", "base64").toString()
-    
-        this.reporter = new TelemetryReporter(extensionId, extensionVersion, innocentKitten);
+        this.reporterEnabled = enabled;
         this.resetMeasurements()
     }
 
     sendError(error: Error, code: number = 0, category='typescript'){
         console.error(`${category} error: ${error.name} code ${code}\n${error.stack}`)
-        if(this.enabled){
-            
+        if(this.enabled && this.reporterEnabled){
+
             error.stack = this.anonymizePaths(error.stack)
             
-            // no point in sending same error twice (and we want to stay under free API limit)
+            // no point in sending same error twice
             if(error.stack == this.lastStackTrace) return
-
-            this.reporter.sendTelemetryException(error, {
-                code: code.toString(),
-                category,
-            })
 
             this.lastStackTrace = error.stack
         }
@@ -52,7 +36,7 @@ export default class Reporter{
      * sends various stats to azure app insights
      */
     sendFinishedEvent(settings: WorkspaceConfiguration){
-        if(this.enabled){
+        if(this.enabled && this.reporterEnabled){
             const measurements: {[key: string]: number} = {}
             measurements['timeSpent'] = (Date.now() - this.timeOpened)/1000
             measurements['numRuns'] = this.numRuns
@@ -81,8 +65,6 @@ export default class Reporter{
             properties['pythonPath'] = this.anonymizePaths(livecode2Utils.getPythonPath())
             properties['pythonVersion'] = this.pythonVersion
 
-            this.reporter.sendTelemetryEvent("closed", properties, measurements)
-
             this.resetMeasurements()
         }
     }
@@ -105,5 +87,5 @@ export default class Reporter{
         return input.replace(new RegExp('\\'+sep+userInfo().username, 'g'), sep+'anon')
     }
 
-    dispose(){this.reporter.dispose()}
+    dispose(){}
 }
