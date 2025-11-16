@@ -12,10 +12,16 @@
     line-height:7px;
 }
 
-.print{
-    white-space: pre-wrap; /*https://stackoverflow.com/questions/11423300/new-lines-in-text-within-a-div*/
+.vars-plain{
+    white-space: pre-wrap;
     font-family: var(--vscode-editor-font-family);
-    font-size:14px;
+    font-size: 13px;
+    color: var(--vscode-editor-foreground);
+    margin-top: 4px;
+}
+
+.print{
+    display: none;
 }
 
 /*below stderr css will be used in future when i have handle stderr properly*/

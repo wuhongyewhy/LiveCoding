@@ -10,34 +10,34 @@ export function activate(context: vscode.ExtensionContext) {
     previewManager = new PreviewManager(context);
 
     // Register the commands that are provided to the user
-    const livecode = vscode.commands.registerCommand("extension.currentlivecodeSession", () => {
+    const livecode = vscode.commands.registerCommand("livecode2.currentSession", () => {
         previewManager.startlivecode();
     });
 
-    const newlivecodeSession = vscode.commands.registerCommand("extension.newlivecodeSession", ()=>{
+    const newlivecodeSession = vscode.commands.registerCommand("livecode2.newSession", ()=>{
         vscodeUtils.newUnsavedPythonDoc(vscodeUtils.getHighlightedText())
             .then(()=>{previewManager.startlivecode()});
     });
 
-    const closelivecode = vscode.commands.registerCommand("extension.closelivecode", ()=>{
+    const closelivecode = vscode.commands.registerCommand("livecode2.close", ()=>{
         previewManager.dispose()
     });
 
     // exact same as above, just defining command so users are aware of the feature
-    const livecodeOnHighlightedCode = vscode.commands.registerCommand("extension.newlivecodeSessionOnHighlightedCode", ()=>{
+    const livecodeOnHighlightedCode = vscode.commands.registerCommand("livecode2.newSessionOnHighlightedCode", ()=>{
         vscodeUtils.newUnsavedPythonDoc(vscodeUtils.getHighlightedText())
             .then(()=>{previewManager.startlivecode()});
     });
 
-    const executelivecode = vscode.commands.registerCommand("extension.executelivecode", () => {
+    const executelivecode = vscode.commands.registerCommand("livecode2.execute", () => {
         previewManager.runlivecode()
     });
 
-    const executelivecodeBlock = vscode.commands.registerCommand("extension.executelivecodeBlock", () => {
+    const executelivecodeBlock = vscode.commands.registerCommand("livecode2.executeBlock", () => {
         previewManager.runlivecodeBlock()
     });
 
-    const printDir = vscode.commands.registerCommand("extension.printDir", () => {
+    const printDir = vscode.commands.registerCommand("livecode2.printDir", () => {
         previewManager.printDir()
     });
 

@@ -153,7 +153,7 @@ var module, window, define, renderjson = (function () {
         if (json === void 0) return themetext(null, my_indent, "keyword", "undefined");
 
 
-        if (first_level == true) {
+        if (first_level == true && json && json.abcdict) {
 
             var undisclosure = function (open, placeholder, close, type, builder) {
 

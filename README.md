@@ -1,20 +1,16 @@
-## LiveCode2
+## livecode2 for python
 
-LiveCode2 evaluates your python code while you type and displays variable values for each line.
+livecode2 for python evaluates your python code while you type and displays trace output for each line using space_tracer.
 
 ![demo gif](https://raw.githubusercontent.com/Xirider/LiveCode/master/livecode_example.gif)
 
-LiveCode is available for free on the vscode [marketplace](https://marketplace.visualstudio.com/items?itemName=xirider.LiveCode#overview).
+The original LiveCode extension is available on the vscode marketplace; livecode2 is a fork that can be installed side‑by‑side with it.
 
 ## Usage
 
 First, make sure you have [python 3.5 or greater](https://www.python.org/downloads/) installed.
 
-Open a python file and click on icon in the top bar to the right to open LiveCode. Click on the icon again to close LiveCode.
-
-Or run LiveCode through the command search: `control-shift-p`
-
-or use the shortcuts: `control-shift-a` (current doc) / `control-shift-q` (new doc)
+Open a python file and click on the icon in the top bar to the right to open livecode2. Click on the icon again to close it, or use the shortcuts: `control-shift-a` (current doc) / `control-shift-q` (new doc).
 
 ## Features
 

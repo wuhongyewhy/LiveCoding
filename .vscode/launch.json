@@ -3,27 +3,6 @@
 	"version": "0.1.0",
 	"configurations": [
 		{
-			"name": "Python: Remote Attach",
-			"type": "python",
-			"request": "attach",
-			"port": 5678,
-			"host": "localhost",
-			"pathMappings": [
-				{
-					"localRoot": "${workspaceFolder}",
-					"remoteRoot": "."
-				}
-			]
-		},
-		{
-			"name": "Python: Current File (Integrated Terminal)",
-			"type": "python",
-			"request": "launch",
-			"program": "${file}",
-			"console": "integratedTerminal",
-			"justMyCode": false
-		},
-		{
 			"name": "Launch Extension",
 			"type": "extensionHost",
 			"request": "launch",
@@ -37,6 +16,27 @@
 				"out/src"
 			],
 			"preLaunchTask": "npm"
+		},
+		// {
+		// 	"name": "Python: Remote Attach",
+		// 	"type": "python",
+		// 	"request": "attach",
+		// 	"port": 5678,
+		// 	"host": "localhost",
+		// 	"pathMappings": [
+		// 		{
+		// 			"localRoot": "${workspaceFolder}",
+		// 			"remoteRoot": "."
+		// 		}
+		// 	]
+		// },
+		{
+			"name": "Python: Current File (Integrated Terminal)",
+			"type": "python",
+			"request": "launch",
+			"program": "${file}",
+			"console": "integratedTerminal",
+			"justMyCode": false
 		},
 		{
 			"name": "Integration Tests",

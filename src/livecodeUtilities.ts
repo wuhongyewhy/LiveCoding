@@ -6,12 +6,12 @@ import { PythonShell } from "python-shell";
 import vscodeUtils from "./vscodeUtilities"
 
 /**
- * utilities specific to livecode
+ * utilities specific to livecode2
  */
-export default class livecodeUtils {
+export default class livecode2Utils {
 
     static getEnvFilePath(){
-        let envFilePath = vscodeUtils.getSettingOrOtherExtSettingAsDefault<string>("livecode", "python", "envFile")
+        let envFilePath = vscodeUtils.getSettingOrOtherExtSettingAsDefault<string>("livecode2", "python", "envFile")
 
         if(!envFilePath) envFilePath = "${workspaceFolder}/.env"
 
@@ -19,7 +19,7 @@ export default class livecodeUtils {
     }
 
     static getPythonPath(){
-        let pythonPath = vscodeUtils.getSettingOrOtherExtSettingAsDefault<string>("livecode", "python", "pythonPath")
+        let pythonPath = vscodeUtils.getSettingOrOtherExtSettingAsDefault<string>("livecode2", "python", "pythonPath")
 
         if(!pythonPath) pythonPath = PythonShell.defaultPythonPath
 

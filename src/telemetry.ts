@@ -3,7 +3,7 @@ import { extensions, WorkspaceConfiguration } from "vscode";
 import TelemetryReporter from "vscode-extension-telemetry";
 import { userInfo } from "os";
 import { sep } from "path";
-import livecodeUtils from "./livecodeUtilities";
+import livecode2Utils from "./livecodeUtilities";
 
 export default class Reporter{
     private reporter: TelemetryReporter
@@ -17,7 +17,7 @@ export default class Reporter{
     pythonVersion: string
 
     constructor(private enabled: boolean){
-        const extensionId = "xirider.livecode";
+        const extensionId = "xirider.livecode2";
         const extension = extensions.getExtension(extensionId)!;
         const extensionVersion = extension.packageJSON.version;
 
@@ -78,7 +78,7 @@ export default class Reporter{
                 properties[key] = settingsDict[key]
             }
             
-            properties['pythonPath'] = this.anonymizePaths(livecodeUtils.getPythonPath())
+            properties['pythonPath'] = this.anonymizePaths(livecode2Utils.getPythonPath())
             properties['pythonVersion'] = this.pythonVersion
 
             this.reporter.sendTelemetryEvent("closed", properties, measurements)

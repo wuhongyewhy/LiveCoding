@@ -53,22 +53,25 @@ if r.status_code == 200:
 </code>`;
     
 
-    private css: string
-    private jsonRendererScript: string;
+    private css: string = ""
+    private jsonRendererScript: string = "";
+    private cspMeta: string = ""
     private errorContainer = ""
     private jsonRendererCode = `<script></script>`;
-    private emptyPrint = `<br><h3>Print Output:</h3><div id="print"></div>`
+    private emptyPrint = ``
     private printContainer = this.emptyPrint;
     private timeContainer = ""
     public panel: vscode.WebviewPanel
     public startrange = 0
     private customCSS = ""
+    private varsPlainText = `<pre id="results-plain" class="vars-plain">尚未生成变量</pre>`
+    private renderCount = 0
+    private scriptNonce: string = this.generateNonce()
     
 
     constructor(private context: vscode.ExtensionContext, htmlUpdateFrequency=50) {
         this._onDidChange = new vscode.EventEmitter<vscode.Uri>();
-        this.css = `<link rel="stylesheet" type="text/css" href="${this.getMediaPath("pythonPanelPreview.css")}">`
-        this.jsonRendererScript = `<script src="${this.getMediaPath("jsonRenderer.js")}"></script>`
+        this.refreshStaticAssets()
 
         if(htmlUpdateFrequency != 0){
             // refreshing html too much can freeze vscode... lets avoid that
@@ -79,9 +82,13 @@ if r.status_code == 200:
     }
 
     start(linkedFileName: string){
-        this.panel = vscode.window.createWebviewPanel("livecode","LiveCode - " + linkedFileName, vscode.ViewColumn.Two,{
-            enableScripts:true
+        this.panel = vscode.window.createWebviewPanel("livecode2","livecode2 for python - " + linkedFileName, vscode.ViewColumn.Two,{
+            enableScripts:true,
+            localResourceRoots: [
+                vscode.Uri.file(path.join(this.context.extensionPath, "media"))
+            ]
         });
+        this.refreshStaticAssets()
         // this.startContent();
         this.panel.webview.html = this.landingPage
 
@@ -89,7 +96,10 @@ if r.status_code == 200:
     }
 
     public updateVars(vars: object){
-        let userVarsCode = `userVars = ${JSON.stringify(vars)};`
+        this.renderCount += 1
+        this.scriptNonce = this.generateNonce()
+        this.refreshStaticAssets()
+        let userVarsCode = `window.userVars = ${JSON.stringify(vars)};`
 
         // escape end script tag or else the content will escape its container and WREAK HAVOC
         userVarsCode = userVarsCode.replace(/<\/script>/g, "<\\/script>")
@@ -112,40 +122,44 @@ if r.status_code == 200:
 
 
                 
-        this.jsonRendererCode = `<script>
-            window.onload = function(){
-                this.scrollTo(0, 19 * ${this.startrange});
-                ${userVarsCode}
-                let jsonRenderer = renderjson.set_icons('+', '-') // default icons look a bit wierd, overriding
-                    .set_show_to_level(${settings().get("show_to_level")}) 
-                    .set_max_string_length(${settings().get("max_string_length")});
-                document.getElementById("results").appendChild(jsonRenderer(userVars));
-                
-                var setscroll = ${this.startrange}
-                // if (setscroll > 0) {
-                //     setscroll -= 1
-                // }
-                this.scrollTo(0, 19 * setscroll);
-                this.addEventListener("message", event => {
+        this.jsonRendererCode = `<script nonce="${this.scriptNonce}">
+            (function(){
+                const render = () => {
+                    window.scrollTo(0, 19 * ${this.startrange});
+                    ${userVarsCode}
+                    const container = document.getElementById("results");
+                    if(!container) return;
+                    container.innerHTML = "";
+                    let jsonRenderer = renderjson.set_icons('+', '-')
+                        .set_show_to_level(${settings().get("show_to_level")}) 
+                        .set_max_string_length(${settings().get("max_string_length")});
+                    container.appendChild(jsonRenderer(userVars));
+                    
+                    var setscroll = ${this.startrange};
+                    window.scrollTo(0, 19 * setscroll);
+                    window.addEventListener("message", event => {
+                        var scrolllevel = event.data.line;
+                        window.scrollTo(0, 19 * scrolllevel);
+                    });
 
-                    var scrolllevel = event.data.line
-                    // if (scrolllevel > 0) {
-                    //     scrolllevel -= 1
-                    // }
-                    this.scrollTo(0, 19 * scrolllevel);
-                })
+                    const fallback = document.getElementById("results-plain");
+                    if(fallback) fallback.style.display = "none";
+                };
 
-
-            }
+                if(document.readyState === "loading"){
+                    window.addEventListener("DOMContentLoaded", render, { once: true });
+                } else {
+                    render();
+                }
+            })();
             </script>`
 
+        const rawVars = (vars as any)?.rawVariables ?? vars
+        const plainJson = JSON.stringify(rawVars, null, 2) || "{}"
+        const escapedPlainJson = Utilities.escapeHtml(plainJson)
+        this.varsPlainText = `<pre id="results-plain" class="vars-plain">${escapedPlainJson}</pre>`
 
-
-
-
-
-
-
+        this.throttledUpdate();
     }
     // this.scroll(1000, 1000);
 
@@ -187,6 +201,15 @@ if r.status_code == 200:
 
         this.printContainer = `<br><h3>Print Output:</h3><div class="print">${printResults}</div>`
         this.throttledUpdate();
+    }
+
+    public showTrace(trace: string){
+        const escaped = Utilities.escapeHtml(trace);
+        this.varsPlainText = `<pre id="results-plain" class="vars-plain">${escaped}</pre>`
+        this.printContainer = this.emptyPrint
+        this.errorContainer = ""
+        this.timeContainer = ""
+        this.throttledUpdate()
     }
 
     clearPrint(){
@@ -238,21 +261,49 @@ if r.status_code == 200:
 
     private getMediaPath(mediaFile: string) {
         const onDiskPath = vscode.Uri.file(path.join(this.context.extensionPath, "media", mediaFile));
-        return onDiskPath.with({ scheme: "vscode-resource" });
+        if(this.panel && (this.panel.webview as any).asWebviewUri){
+            const asUri = (this.panel.webview as any).asWebviewUri(onDiskPath) as vscode.Uri
+            return asUri.toString()
+        }
+        return onDiskPath.with({ scheme: "vscode-resource" }).toString();
+    }
+
+    private generateNonce(){
+        const possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
+        let text = ""
+        for(let i=0; i<32; i++){
+            text += possible.charAt(Math.floor(Math.random() * possible.length))
+        }
+        return text
+    }
+
+    private refreshStaticAssets(){
+        const cssPath = this.getMediaPath("pythonPanelPreview.css")
+        const webview = this.panel?.webview
+        const cspSource = webview?.cspSource
+        if(cspSource){
+            this.cspMeta = `<meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src ${cspSource} https:; script-src 'nonce-${this.scriptNonce}' ${cspSource}; style-src 'unsafe-inline' ${cspSource}; font-src ${cspSource};">`
+        } else {
+            this.cspMeta = ""
+        }
+        this.css = `<link rel="stylesheet" type="text/css" href="${cssPath}">`
+        const jsonRendererPath = this.getMediaPath("jsonRenderer.js")
+        this.jsonRendererScript = `<script nonce="${this.scriptNonce}" src="${jsonRendererPath}"></script>`
     }
 
     private updateContent(){
 
         const printPlacement = settings().get<string>("printResultPlacement")
         const showFooter = settings().get<boolean>("showFooter")
-        const variables = '<div id="break"><br></div><div id="results"></div>'
+        const variables = `<div id="break"><br></div><div id="results"></div>${this.varsPlainText}`
         // removed <h3>Variables:</h3> from var above
 
         // todo: handle different themes.  check body class: https://code.visualstudio.com/updates/June_2016
         this.html = `<!doctype html>
         <html lang="en">
         <head>
-            <title>LiveCode</title>
+            <title>livecode2 for python</title>
+            ${this.cspMeta}
             ${this.css}
             <style>${this.customCSS}</style>
             ${this.jsonRendererScript}
@@ -260,10 +311,10 @@ if r.status_code == 200:
         </head>
         <body>
             ${printPlacement == "bottom" ? 
-                variables + this.errorContainer + this.printContainer : 
-                this.printContainer +  this.errorContainer+ variables}
+                variables + this.errorContainer : 
+                this.errorContainer + variables}
             
-            <br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
+            <br><br><br><br>
             ${this.timeContainer}
             <div id="${Math.random()}" style="display:none"></div>
             <div id="739177969589762537283729281" style="display:none"></div></body></html>`

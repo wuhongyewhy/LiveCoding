@@ -4,7 +4,6 @@
 .vscode/**
 .vscode-test/**
 out/test/**
-node_modules/** 
 test/**
 src/**
 **/*.map

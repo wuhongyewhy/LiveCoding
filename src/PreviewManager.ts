@@ -1,10 +1,13 @@
 "use strict"
 import {PythonEvaluator, ExecArgs} from "arepl-backend"
-import livecodeUtils from "./livecodeUtilities"
+import livecode2Utils from "./livecodeUtilities"
 import * as vscode from "vscode"
 import { EnvironmentVariablesProvider } from "./env/variables/environmentVariablesProvider"
 import { EnvironmentVariablesService } from "./env/variables/environment"
-import { join, basename } from "path";
+import { join, basename, dirname } from "path";
+import * as fs from "fs"
+import * as os from "os"
+import { spawn, ChildProcess } from "child_process"
 import { PreviewContainer } from "./previewContainer"
 import Reporter from "./telemetry"
 import {ToAREPLLogic} from "./toAREPLLogic"
@@ -18,7 +21,7 @@ import { WorkspaceService } from "./env/application/workspace"
 import { Position, Range } from "vscode"
 
 /**
- * class with logic for starting livecode and livecode preview
+ * class with logic for starting livecode2 and its preview
  */
 export default class PreviewManager {
 
@@ -32,6 +35,8 @@ export default class PreviewManager {
     subscriptions: vscode.Disposable[] = []
     highlightDecorationType: vscode.TextEditorDecorationType
     pythonEditor: vscode.TextEditor;
+    private traceProcess: ChildProcess | null = null
+    private changeTimer: NodeJS.Timeout | null = null
 
     /**
      * assumes a text editor is already open - if not will error out
@@ -39,7 +44,7 @@ export default class PreviewManager {
     constructor(context: vscode.ExtensionContext) {
         this.runningStatus = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 100);
         this.runningStatus.text = "Running python..."
-        this.runningStatus.tooltip = "livecode is currently running your python file.  Close the livecode preview to stop"
+        this.runningStatus.tooltip = "livecode2 is currently running your python file.  Close the livecode2 preview to stop"
         this.reporter = new Reporter(settings().get<boolean>("telemetry"))
         this.previewContainer = new PreviewContainer(this.reporter, context)
 
@@ -57,14 +62,14 @@ export default class PreviewManager {
             platformService,
             workspaceService,
             process)
-        return e.getEnvironmentVariables(livecodeUtils.getEnvFilePath(), vscodeUtils.getCurrentWorkspaceFolderUri())
+        return e.getEnvironmentVariables(livecode2Utils.getEnvFilePath(), vscodeUtils.getCurrentWorkspaceFolderUri())
     }
 
     async startlivecode(){
         // see https://github.com/Microsoft/vscode/issues/46445
-        vscode.commands.executeCommand("setContext", "livecode", true)
+        vscode.commands.executeCommand("setContext", "livecode2", true)
 
-        // reload reporter (its disposed when livecode is closed)
+        // reload reporter (its disposed when livecode2 is closed)
         this.reporter = new Reporter(settings().get<boolean>("telemetry"))
 
         if(!vscode.window.activeTextEditor){
@@ -86,6 +91,7 @@ export default class PreviewManager {
         // })
         // )
         this.pythonEditorDoc = this.pythonEditor.document
+        this.previewContainer.setActiveDocument(this.pythonEditorDoc)
         
 
         let panel = this.previewContainer.start(basename(this.pythonEditorDoc.fileName));
@@ -95,7 +101,7 @@ export default class PreviewManager {
         this.startAndBindPython()
 
         if(this.pythonEditorDoc.isUntitled && this.pythonEditorDoc.getText() == "") {
-            await livecodeUtils.insertDefaultImports(this.pythonEditor)
+            await livecode2Utils.insertDefaultImports(this.pythonEditor)
             // waiting for this to complete so i dont accidentily trigger
             // the edit doc handler when i insert imports
         }
@@ -232,7 +238,7 @@ export default class PreviewManager {
     }
 
     dispose() {
-        vscode.commands.executeCommand("setContext", "livecode", false)
+        vscode.commands.executeCommand("setContext", "livecode2", false)
 
         if(this.PythonEvaluator.pyshell != null && this.PythonEvaluator.pyshell.childProcess != null){
             this.PythonEvaluator.stop()
@@ -258,9 +264,9 @@ export default class PreviewManager {
         PythonShell.getVersion(`"${pythonPath}"`).then((out)=>{
             let version = out.stdout ? out.stdout : out.stderr
             if(version?.includes("Python 3.4") || version?.includes("Python 2")){
-                vscode.window.showErrorMessage(`livecode does not support ${version}.
-                Please upgrade or set livecode.pythonPath to a diffent python.
-                livecode needs python 3.5 or greater`)
+                vscode.window.showErrorMessage(`livecode2 does not support ${version}.
+                Please upgrade or set livecode2.pythonPath to a diffent python.
+                livecode2 needs python 3.5 or greater`)
             }
             if(version){
                 this.reporter.pythonVersion = version.trim()
@@ -275,20 +281,87 @@ export default class PreviewManager {
         })
     }
 
+    /**
+     * run space_tracer on current code and show its textual output
+     */
+    private runSpaceTracer(code: string, filePath: string){
+        const workspaceFolder = vscodeUtils.getCurrentWorkspaceFolder(false) || undefined
+        const pythonPath = livecode2Utils.getPythonPath()
+
+        // write code to temp file
+        const baseName = basename(filePath || "untitled.py")
+        const safeBase = baseName.replace(/[^\w\.]+/g, "_")
+        const tempFile = join(os.tmpdir(), `livecode2_${safeBase}`)
+
+        try {
+            fs.writeFileSync(tempFile, code, { encoding: "utf8" })
+        } catch (err) {
+            const msg = err instanceof Error ? err.message : String(err)
+            this.previewContainer.showTrace(`写入临时文件失败: ${msg}`)
+            return
+        }
+
+        // cancel previous trace process
+        if(this.traceProcess){
+            try {
+                this.traceProcess.kill()
+            } catch {}
+            this.traceProcess = null
+        }
+
+        const args = ["-m", "space_tracer", tempFile]
+        const proc = spawn(pythonPath, args, {
+            cwd: workspaceFolder ? workspaceFolder : dirname(tempFile),
+            env: process.env
+        })
+        this.traceProcess = proc
+
+        let stdout = ""
+        let stderr = ""
+
+        proc.stdout.on("data", data => {
+            stdout += data.toString()
+        })
+        proc.stderr.on("data", data => {
+            stderr += data.toString()
+        })
+
+        proc.on("close", code => {
+            if(this.traceProcess !== proc) return  // newer run started
+            this.traceProcess = null
+            this.runningStatus.hide()
+
+            if(code === 0){
+                this.previewContainer.showTrace(stdout || "(space_tracer 没有输出)")
+            } else {
+                const combined = [stdout, stderr].filter(Boolean).join("\n").trim()
+                this.previewContainer.showTrace(
+                    combined || `space_tracer 退出码: ${code}`
+                )
+            }
+        })
+
+        proc.on("error", err => {
+            const msg = err instanceof Error ? err.message : String(err)
+            this.runningStatus.hide()
+            this.previewContainer.showTrace(`启动 space_tracer 失败: ${msg}`)
+        })
+    }
+
     private change_line_view() {
+        const editor = vscode.window.activeTextEditor
+        if(!editor || editor.visibleRanges.length === 0) return
+        const panel = this.previewContainer?.pythonPanelPreview?.panel
+        if(!panel || panel.webview === undefined) return
 
-        var curline = vscode.window.activeTextEditor.visibleRanges[0].start.line;
-
-        var curwebview = this.previewContainer.pythonPanelPreview.panel.webview
-
-        curwebview.postMessage({ line: curline });
-    
+        const curline = editor.visibleRanges[0].start.line
+        panel.webview.postMessage({ line: curline })
     }
     /**
      * starts livecode python backend and binds print&result output to the handlers
      */
     private async startAndBindPython(){
-        const pythonPath = livecodeUtils.getPythonPath()
+        const pythonPath = livecode2Utils.getPythonPath()
         const pythonOptions = settings().get<string[]>("pythonOptions")
 
         this.warnIfOutdatedPythonVersion(pythonPath)
@@ -357,13 +430,15 @@ export default class PreviewManager {
     private subscribeHandlersToDoc(){
 
         if(settings().get<boolean>("skipLandingPage")){
-            this.onAnyDocChange(this.pythonEditorDoc);
+            if(this.pythonEditorDoc){
+                this.runSpaceTracerForDoc(this.pythonEditorDoc)
+            }
         }
 
         
         vscode.workspace.onDidSaveTextDocument((e) => {
             if(settings().get<string>("whenToExecute") == "onSave"){
-                this.onAnyDocChange(e)
+                this.runSpaceTracerForDoc(e)
             }
         }, this, this.subscriptions)
         
@@ -371,9 +446,12 @@ export default class PreviewManager {
             const cachedSettings = settings()
             if(cachedSettings.get<string>("whenToExecute") == "afterDelay"){
                 let delay = cachedSettings.get<number>("delay");
-                const restartExtraDelay = cachedSettings.get<number>("restartDelay");
-                delay += this.tolivecodeLogic.restartMode ? restartExtraDelay : 0
-                this.PythonEvaluator.debounce(this.onAnyDocChange.bind(this, e.document), delay)
+                if(this.changeTimer){
+                    clearTimeout(this.changeTimer)
+                }
+                this.changeTimer = setTimeout(() => {
+                    this.runSpaceTracerForDoc(e.document)
+                }, delay)
             }
         }, this, this.subscriptions)
         
@@ -417,9 +495,6 @@ export default class PreviewManager {
         if(event == this.pythonEditorDoc){
 
             this.reporter.numRuns += 1
-            if(this.PythonEvaluator.executing){
-                this.reporter.numInterruptedRuns += 1
-            }
 
             const text = event.getText()
 
@@ -450,8 +525,8 @@ export default class PreviewManager {
                         const unsafeKeywords = settings().get<string[]>('unsafeKeywords')
                         this.previewContainer.updateError(null, `unsafe keyword detected. 
 Doing irreversible operations like deleting folders is very dangerous in a live editor. 
-If you want to continue please clear livecode.unsafeKeywords setting. 
-Currently livecode.unsafeKeywords is set to ["${unsafeKeywords.join('", "')}"]`, true)
+If you want to continue please clear livecode2.unsafeKeywords setting. 
+Currently livecode2.unsafeKeywords is set to ["${unsafeKeywords.join('", "')}"]`, true)
                         return
                     }
                     else{
@@ -463,5 +538,25 @@ Currently livecode.unsafeKeywords is set to ["${unsafeKeywords.join('", "')}"]`,
                 throw error;
             }
         }        
+    }
+    private runSpaceTracerForDoc(doc: vscode.TextDocument){
+        if(!this.pythonEditorDoc || doc !== this.pythonEditorDoc) return
+
+        const text = doc.getText()
+
+        let filePath = ""
+        if(doc.isUntitled){
+            /* user would assume untitled file is in same dir as workspace root */
+            filePath = join(vscodeUtils.getCurrentWorkspaceFolder(false), doc.fileName)
+        }
+        else{
+            filePath = doc.fileName
+        }
+
+        const curline = this.pythonEditor?.visibleRanges[0]?.start.line ?? 0;
+        this.previewContainer.pythonPanelPreview.startrange = curline;
+        this.runningStatus.text = "Running space_tracer..."
+        this.runningStatus.show();
+        this.runSpaceTracer(text, filePath)
     }
 }
