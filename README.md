@@ -12,6 +12,16 @@ livecode2 for python evaluates your python code while you type and displays trac
 
 The original LiveCode extension is available on the vscode marketplace; livecode2 is a fork that can be installed side‑by‑side with it.
 
+## Development Environment
+
+The project is now pinned to the current Node.js 24 LTS toolchain through Volta, and targets the VS Code 1.105+ extension API (validated on 1.106). To get started:
+
+1. `volta install node@24` (or use any Node.js ≥ 18.18 that supports npm 9/10).
+2. `npm install` to restore dependencies (TypeScript 5.9, @vscode/test-electron 2.x, Mocha 11, etc.).
+3. `npm run compileOnce` or `npm run test` to build and execute the extension test suite.
+
+If you previously relied on Node 10, make sure to re-run the commands above so local artifacts (like `node_modules`) are refreshed against the modern toolchain.
+
 ## Usage
 
 First, make sure you have [python 3.5 or greater](https://www.python.org/downloads/) installed.

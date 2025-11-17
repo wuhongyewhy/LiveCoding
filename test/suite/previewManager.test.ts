@@ -10,7 +10,10 @@ import { EOL } from "os";
  */
 suite("PreviewManager and pythonPanelPreview Tests", () => {
 
-    const arepl = vscode.extensions.getExtension("almenon.arepl")!;
+    const livecodeExtension = vscode.extensions.getExtension("wuhy.livecode2") || vscode.extensions.getExtension("almenon.arepl");
+    if(!livecodeExtension){
+        throw new Error("livecode2 extension metadata not found");
+    }
     let editor: vscode.TextEditor
     let panel: vscode.WebviewPanel
     let previewManager: PreviewManager
@@ -19,7 +22,7 @@ suite("PreviewManager and pythonPanelPreview Tests", () => {
         asAbsolutePath: (file: string)=>{
             return __dirname + "/" + file
         },
-        extensionPath: arepl.extensionPath,
+        extensionPath: livecodeExtension.extensionPath,
     }
 
     suiteSetup(function(done){

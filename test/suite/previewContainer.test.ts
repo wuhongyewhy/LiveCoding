@@ -14,7 +14,10 @@ interface UserError {
  */
 suite("PreviewContainer and pythonPanelPreview Tests", () => {
 
-    const arepl = vscode.extensions.getExtension("almenon.arepl")!;
+    const livecodeExtension = vscode.extensions.getExtension("wuhy.livecode2") || vscode.extensions.getExtension("almenon.arepl");
+    if(!livecodeExtension){
+        throw new Error("livecode2 extension metadata not found");
+    }
 
     const mockUserError: UserError = {
         "__cause__": null,
@@ -35,7 +38,7 @@ suite("PreviewContainer and pythonPanelPreview Tests", () => {
         asAbsolutePath: (file: string)=>{
             return __dirname + "/" + file
         },
-        extensionPath: arepl.extensionPath,
+        extensionPath: livecodeExtension.extensionPath,
     }
 
     const previewContainer = new PreviewContainer(new Reporter(false), mockContext, 0);

@@ -1,16 +1,22 @@
 {
     "compilerOptions": {
         "module": "commonjs",
-        "target": "es6",
+        "target": "ES2022",
+        "moduleResolution": "node",
+        "lib": ["ES2023"],
         "outDir": "out",
-        "lib": [
-            "es6"
-        ],
-        "sourceMap": true,
         "rootDir": ".",
+        "sourceMap": true,
+        "esModuleInterop": true,
+        "skipLibCheck": true,
         "forceConsistentCasingInFileNames": true,
-        "experimentalDecorators": true
+        "experimentalDecorators": true,
+        "types": ["node", "mocha"]
     },
+    "include": [
+        "src",
+        "test"
+    ],
     "exclude": [
         "node_modules",
         ".vscode-test"

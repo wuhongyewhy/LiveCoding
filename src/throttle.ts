@@ -5,9 +5,9 @@
  * @example let l = new limit(); let logMessageLimited = l.throttleAndQueue(msg => { console.log(msg); }, 500);
  */
 export class Limit{
-    public callQueue = []
-    public lastCall
-    public interval: NodeJS.Timer
+    public callQueue: Function[] = [];
+    public lastCall: Function | null = null;
+    public interval: NodeJS.Timeout | null = null;
 
     /**
      * Returns a version of your function that can be called at most every W milliseconds, where W is wait.
@@ -22,7 +22,8 @@ export class Limit{
         const caller = function(){
             if(self.callQueue.length && !isCalled){
                 isCalled = true;
-                self.callQueue.shift().call();
+                const next = self.callQueue.shift();
+                next?.call(undefined);
                 setTimeout(function(){
                     isCalled = false;
                     caller();
@@ -49,28 +50,30 @@ export class Limit{
         function caller(){
             // if no timer is set then we can accept a call
             if(!self.interval){
-                self.lastCall.call()
-                self.lastCall = null
+                self.lastCall?.call(undefined);
+                self.lastCall = null;
 
                 // check every W ms for updates
                 self.interval = setInterval(() => {
                     if(self.lastCall){
-                        self.lastCall.call()
-                        self.lastCall = null
+                        self.lastCall.call(undefined);
+                        self.lastCall = null;
                     }
                     else{
                         // no update, we can stop checking
-                        clearInterval(self.interval)
-                        self.interval = null
+                        if(self.interval){
+                            clearInterval(self.interval);
+                            self.interval = null;
+                        }
                     }
-                }, wait)
+                }, wait);
             }
         }
 
         return function(...args){
             self.lastCall = fn.bind(this, ...args);
 
-            caller()
+            caller();
         }
     }
 }

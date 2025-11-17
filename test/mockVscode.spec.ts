@@ -354,10 +354,10 @@ export let vscodeMock = {
         showTextDocument: function(doc){
             return new Promise(()=>doc)
         },
-        createStatusBarItem: function(alignment?: number, priority?: number):StatusBarItem{
+        createStatusBarItem: function(alignment?: StatusBarAlignment, priority?: number):StatusBarItem{
             return {
-                alignment: 0,
-                priority: 0,
+                alignment: alignment ?? StatusBarAlignment.Left,
+                priority: priority ?? 0,
                 text: "",
                 tooltip: "",
                 color: "",
