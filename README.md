@@ -15,17 +15,17 @@ Live Coding for Python brings live coding to VS Code through `space_tracer`. It 
 ### Python Requirement & Interpreter Discovery
 
 - Python ≥3.8 .
-- Interpreter order: active environment → bundled/`livecode2.pythonPath` → global fallback.
+- Interpreter order: active environment → bundled/`live-coding.pythonPath` → global fallback.
 - Errors are surfaced if no interpreter can be found.
 
 ### Configuration Cheat Sheet
 
 | Setting                                                 | Purpose                                        |
 | ------------------------------------------------------- | ---------------------------------------------- |
-| `livecode2.whenToExecute`, `livecode2.delay`        | Debounce & trigger strategy.                   |
-| `livecode2.pythonPath`, `livecode2.envFile`         | Override interpreter / .env location.          |
-| `livecode2.defaultImports`                            | Inject imports automatically.                  |
-| `livecode2.printResultPlacement`, `livecode2.show*` | Control UI layout, filtering, and diagnostics. |
+| `live-coding.whenToExecute`, `live-coding.delay`        | Debounce & trigger strategy.                   |
+| `live-coding.pythonPath`, `live-coding.envFile`         | Override interpreter / .env location.          |
+| `live-coding.defaultImports`                            | Inject imports automatically.                  |
+| `live-coding.printResultPlacement`, `live-coding.show*` | Control UI layout, filtering, and diagnostics. |
 
 ### Getting Started
 
@@ -70,7 +70,7 @@ Live Coding for Python brings live coding to VS Code through `space_tracer`. It 
 Live Coding 会按照以下顺序自动寻找可用的 Python 解释器：
 
 1. 当前激活环境：`PYTHON_EXECUTABLE`、`VIRTUAL_ENV`、`CONDA_PREFIX`、VS Code Python 扩展的 `python.defaultInterpreterPath` 等。
-2. 扩展目录自带的 `python/` 文件夹，或者 `livecode2.pythonPath` 设置中显式指定的路径（支持 `${workspaceFolder}` 宏）。
+2. 扩展目录自带的 `python/` 文件夹，或者 `live-coding.pythonPath` 设置中显式指定的路径（支持 `${workspaceFolder}` 宏）。
 3. 系统 PATH 中的 Python（`PythonShell.defaultPythonPath` 对应的平台默认命令）。
 
 若所有候选均失败，界面会提示“无法找到 Python”，此时请安装 Python 或在设置中指定路径。
@@ -81,12 +81,12 @@ Live Coding 会按照以下顺序自动寻找可用的 Python 解释器：
 
 | 设置键 Key                                                                   | 说明 Description                                        |
 | ---------------------------------------------------------------------------- | ------------------------------------------------------- |
-| `livecode2.whenToExecute`, `livecode2.delay`, `livecode2.restartDelay` | 控制实时执行的触发策略与延迟。                          |
-| `livecode2.pythonPath`, `livecode2.envFile`                              | 手动指定解释器路径与 .env 文件，优先级高于全局 Python。 |
-| `livecode2.defaultImports`                                                 | 新会话启动时自动插入的 import 列表。                    |
-| `livecode2.printResultPlacement`, `livecode2.show*`                      | 控制结果显示位置、变量过滤、语法/名称错误提示。         |
+| `live-coding.whenToExecute`, `live-coding.delay`, `live-coding.restartDelay` | 控制实时执行的触发策略与延迟。                          |
+| `live-coding.pythonPath`, `live-coding.envFile`                              | 手动指定解释器路径与 .env 文件，优先级高于全局 Python。 |
+| `live-coding.defaultImports`                                                 | 新会话启动时自动插入的 import 列表。                    |
+| `live-coding.printResultPlacement`, `live-coding.show*`                      | 控制结果显示位置、变量过滤、语法/名称错误提示。         |
 
-更多选项请在 VS Code 设置中搜索 `livecode2`。
+更多选项请在 VS Code 设置中搜索 `live-coding`。
 
 ---
 
@@ -97,7 +97,7 @@ Live Coding 会按照以下顺序自动寻找可用的 Python 解释器：
 3. 打开 `.py` 文件 → 运行命令 “Live Coding: eval python in real time” 或使用快捷键：
    - Windows/Linux：`Ctrl+Shift+A`（当前文档）、`Ctrl+Shift+Q`（新会话）
    - macOS：`Cmd+Shift+A`、`Cmd+Shift+R`
-4. 根据需要调整 `afterDelay`、`onSave` 等触发方式，或修改 `livecode2.pythonPath`。
+4. 根据需要调整 `afterDelay`、`onSave` 等触发方式，或修改 `live-coding.pythonPath`。
 
 
 ---

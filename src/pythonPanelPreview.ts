@@ -82,7 +82,7 @@ if r.status_code == 200:
     }
 
     start(linkedFileName: string){
-        this.panel = vscode.window.createWebviewPanel("livecode2","livecode2 for python - " + linkedFileName, vscode.ViewColumn.Two,{
+        this.panel = vscode.window.createWebviewPanel("live-coding","live coding for python - " + linkedFileName, vscode.ViewColumn.Two,{
             enableScripts:true,
             localResourceRoots: [
                 vscode.Uri.file(path.join(this.context.extensionPath, "media"))
@@ -302,7 +302,7 @@ if r.status_code == 200:
         this.html = `<!doctype html>
         <html lang="en">
         <head>
-            <title>livecode2 for python</title>
+            <title>live coding for python</title>
             ${this.cspMeta}
             ${this.css}
             <style>${this.customCSS}</style>

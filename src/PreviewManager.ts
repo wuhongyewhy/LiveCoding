@@ -17,7 +17,7 @@ import { WorkspaceService } from "./env/application/workspace"
 import { Position, Range } from "vscode"
 
 /**
- * class with logic for starting livecode2 and its preview
+ * class with logic for starting live-coding and its preview
  */
 export default class PreviewManager {
 
@@ -39,7 +39,7 @@ export default class PreviewManager {
     constructor(context: vscode.ExtensionContext) {
         this.runningStatus = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 100);
         this.runningStatus.text = "Running python..."
-        this.runningStatus.tooltip = "livecode2 is currently running your python file.  Close the livecode2 preview to stop"
+        this.runningStatus.tooltip = "live-coding is currently running your python file. Close the live-coding preview to stop"
         this.reporter = new Reporter(settings().get<boolean>("telemetry"))
         this.previewContainer = new PreviewContainer(this.reporter, context)
 
@@ -62,9 +62,9 @@ export default class PreviewManager {
 
     async startlivecode(){
         // see https://github.com/Microsoft/vscode/issues/46445
-        vscode.commands.executeCommand("setContext", "livecode2", true)
+        vscode.commands.executeCommand("setContext", "live-coding", true)
 
-        // reload reporter (its disposed when livecode2 is closed)
+        // reload reporter (its disposed when live-coding is closed)
         this.reporter = new Reporter(settings().get<boolean>("telemetry"))
 
         if(!vscode.window.activeTextEditor){
@@ -201,7 +201,7 @@ export default class PreviewManager {
     }
 
     dispose() {
-        vscode.commands.executeCommand("setContext", "livecode2", false)
+        vscode.commands.executeCommand("setContext", "live-coding", false)
 
         this.disposable = vscode.Disposable.from(...this.subscriptions);
         this.disposable.dispose();
@@ -223,9 +223,9 @@ export default class PreviewManager {
         PythonShell.getVersion(`"${pythonPath}"`).then((out)=>{
             let version = out.stdout ? out.stdout : out.stderr
             if(version?.includes("Python 3.4") || version?.includes("Python 2")){
-                vscode.window.showErrorMessage(`livecode2 does not support ${version}.
-                Please upgrade or set livecode2.pythonPath to a diffent python.
-                livecode2 needs python 3.5 or greater`)
+                vscode.window.showErrorMessage(`live-coding does not support ${version}.
+                Please upgrade or set live-coding.pythonPath to a diffent python.
+                live-coding needs python 3.5 or greater`)
             }
             if(version){
                 this.reporter.pythonVersion = version.trim()
@@ -311,7 +311,7 @@ export default class PreviewManager {
         const curline = editor.visibleRanges[0].start.line
         panel.webview.postMessage({ line: curline })
     }
-    // legacy AREPL backend startup removed – livecode2 now uses space_tracer only
+    // legacy AREPL backend startup removed – live-coding now uses space_tracer only
 
     /**
      * binds various funcs to activate upon edit of document / switching of active doc / etc...
@@ -414,8 +414,8 @@ export default class PreviewManager {
                         const unsafeKeywords = settings().get<string[]>('unsafeKeywords')
                         this.previewContainer.updateError(null, `unsafe keyword detected. 
 Doing irreversible operations like deleting folders is very dangerous in a live editor. 
-If you want to continue please clear livecode2.unsafeKeywords setting. 
-Currently livecode2.unsafeKeywords is set to ["${unsafeKeywords.join('", "')}"]`, true)
+If you want to continue please clear live-coding.unsafeKeywords setting. 
+Currently live-coding.unsafeKeywords is set to ["${unsafeKeywords.join('", "')}"]`, true)
                         return
                     }
                     else{

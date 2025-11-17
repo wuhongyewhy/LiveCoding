@@ -10,9 +10,9 @@ import { EOL } from "os";
  */
 suite("PreviewManager and pythonPanelPreview Tests", () => {
 
-    const livecodeExtension = vscode.extensions.getExtension("wuhy.livecode2") || vscode.extensions.getExtension("almenon.arepl");
+    const livecodeExtension = vscode.extensions.getExtension("wuhy.live-coding") || vscode.extensions.getExtension("almenon.arepl");
     if(!livecodeExtension){
-        throw new Error("livecode2 extension metadata not found");
+        throw new Error("live-coding extension metadata not found");
     }
     let editor: vscode.TextEditor
     let panel: vscode.WebviewPanel

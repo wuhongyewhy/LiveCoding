@@ -9,12 +9,12 @@ import * as path from "path"
 import { spawnSync } from "child_process"
 
 /**
- * utilities specific to livecode2
+ * utilities specific to live-coding
  */
 export default class livecode2Utils {
 
     static getEnvFilePath(){
-        let envFilePath = vscodeUtils.getSettingOrOtherExtSettingAsDefault<string>("livecode2", "python", "envFile")
+        let envFilePath = vscodeUtils.getSettingOrOtherExtSettingAsDefault<string>("live-coding", "python", "envFile")
 
         if(!envFilePath) envFilePath = "${workspaceFolder}/.env"
 
@@ -26,7 +26,7 @@ export default class livecode2Utils {
             // 1. 当前激活环境：显式变量、虚拟环境、Conda、官方 Python 插件
             ...livecode2Utils.getEnvironmentPythonCandidates(),
             livecode2Utils.getPythonExtensionInterpreter(),
-            // 2. 扩展目录自带或 livecode2.pythonPath
+            // 2. 扩展目录自带或 live-coding.pythonPath
             livecode2Utils.getBundledPythonPath(),
             livecode2Utils.getConfiguredPythonPath(),
             // 3. 系统全局 python
@@ -92,7 +92,7 @@ export default class livecode2Utils {
     }
 
     private static getBundledPythonPath(): string | undefined {
-        const extension = vscode.extensions.getExtension("wuhy.livecode2")
+        const extension = vscode.extensions.getExtension("wuhy.live-coding")
         if(!extension) return undefined
         const root = extension.extensionPath
         const relPaths = process.platform === "win32"
