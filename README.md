@@ -1,90 +1,108 @@
+## 简介 / Introduction
 
-## livecode2 for python
-
-livecode2 for python evaluates your python code while you type and displays trace output for each line using space_tracer.
+**livecode2 for Python** 是一个 VS Code 扩展，基于 `space_tracer` 实现“所写即所见”的 Python 运行体验。你只需在编辑器中输入代码，Livecode2 就会自动触发 `space_tracer`，把每一行、每一次循环迭代的值变化、异常信息实时渲染在面板中，帮助你快速理解程序行为。
 
 ![demo gif](https://raw.githubusercontent.com/Xirider/LiveCode/master/livecode_example.gif)
 
-The original LiveCode extension is available on the vscode marketplace; livecode2 is a fork that can be installed side‑by‑side with it.
+---
 
-## Development Environment
+## 主要功能 / Key Features
 
-The project is now pinned to the current Node.js 24 LTS toolchain through Volta, and targets the VS Code 1.105+ extension API (validated on 1.106). To get started:
+- **实时执行 / Live execution**：根据 `afterDelay`、`onSave`、`onKeybinding` 等策略自动运行当前脚本。
+- **变量与循环可视化 / Variable & loop tracing**：每次赋值、循环迭代的轨迹都会显示在 webview 中。
+- **错误即时反馈 / Instant diagnostics**：语法错误与异常堆栈同步呈现，并在编辑器内联提示。
+- **灵活配置 / Highly configurable**：延迟、默认导入、变量过滤、结果展示位置等都可定制。
 
-1. `volta install node@24` (or use any Node.js ≥ 18.18 that supports npm 9/10).
-2. `npm install` to restore dependencies (TypeScript 5.9, @vscode/test-electron 2.x, Mocha 11, etc.).
-3. `npm run compileOnce` or `npm run test` to build and execute the extension test suite.
+---
 
-If you previously relied on Node 10, make sure to re-run the commands above so local artifacts (like `node_modules`) are refreshed against the modern toolchain.
+## Python 版本要求 / Python Version Requirement
 
-## Usage
+- **最低版本 / Minimum**：Python 3.5。
+- **推荐 / Recommended**：Python 3.8 及以上。
 
-First, make sure you have [python 3.5 or greater](https://www.python.org/downloads/) installed.
+Livecode2 会按照以下顺序自动寻找可用的 Python 解释器：
 
-Open a python file and click on the icon in the top bar to the right to open livecode2. Click on the icon again to close it, or use the shortcuts: `control-shift-a` (current doc) / `control-shift-q` (new doc).
+1. 当前激活环境：`PYTHON_EXECUTABLE`、`VIRTUAL_ENV`、`CONDA_PREFIX`、VS Code Python 扩展的 `python.defaultInterpreterPath` 等。
+2. 扩展目录自带的 `python/` 文件夹，或者 `livecode2.pythonPath` 设置中显式指定的路径（支持 `${workspaceFolder}` 宏）。
+3. 系统 PATH 中的 Python（`PythonShell.defaultPythonPath` 对应的平台默认命令）。
 
-## Features
+若所有候选均失败，界面会提示“无法找到 Python”，此时请安装 Python 或在设置中指定路径。
 
-* Real-time evaluation: You don't need to run your python file, just keep typing
-* Variable display: Whenever a variable is declared or changed, its new value is displayed in the same line
-* Loop display: For each iteration of a loop all intermediate values are displayed
-* Error display: The instant you make a mistake an error with stack trace is shown.
+---
 
-### #$save
+## 配置指南 / Configuration Guide
 
-If you want to avoid a section of code being executed in real-time (due to it being slow or calling external resources) you can use \#\$save.  For example:
+| 设置键 Key | 说明 Description |
+| --- | --- |
+| `livecode2.whenToExecute`, `livecode2.delay`, `livecode2.restartDelay` | 控制实时执行的触发策略与延迟。 |
+| `livecode2.pythonPath`, `livecode2.envFile` | 手动指定解释器路径与 .env 文件，优先级高于全局 Python。 |
+| `livecode2.defaultImports` | 新会话启动时自动插入的 import 列表。 |
+| `livecode2.printResultPlacement`, `livecode2.show*` | 控制结果显示位置、变量过滤、语法/名称错误提示。 |
 
-```python
-def largest_prime_factor(n):
-    i = 2
-    while i * i <= n:
-        if n % i:
-            i += 1
-        else:
-            n //= i
-    return n
+更多选项请在 VS Code 设置中搜索 `livecode2`。
 
-# this takes a looonnggg time to execute
-result = largest_prime_factor(8008514751439999)
+---
 
-#$save
-print("but now that i saved i am back to real-time execution")
-```
+## 快速开始 / Getting Started
 
-```python
-import random
-x = random.random()
-#$save
-print(x) # this number will not change when editing below the #$save line
-```
+1. 安装 Python ≥3.5，并通过 `pip install space-tracer` 获取依赖。
+2. 在 VS Code 中安装 livecode2（Marketplace 或 VSIX）。
+3. 打开 `.py` 文件 → 运行命令 “Livecode2: eval python in real time” 或使用快捷键：
+   - Windows/Linux：`Ctrl+Shift+A`（当前文档）、`Ctrl+Shift+Q`（新会话）
+   - macOS：`Cmd+Shift+A`、`Cmd+Shift+R`
+4. 根据需要调整 `afterDelay`、`onSave` 等触发方式，或修改 `livecode2.pythonPath`。
 
-Please note that #$save does not work with certain types, like generators.
+### 特殊指令 / Special Markers
 
-### #$end
+- `#$save`：跳过后续代码的实时执行，适合长耗时或有副作用的片段。
+- `#$end`：标记实时执行区域的终点，之后的代码仅在手动触发时运行。
+- `Ctrl+Enter` / `Cmd+Enter`：在任意位置运行当前代码块。
 
-Use the `#$end` comment to indicate the end of the real-time code. Code after `#$end` will not be executed in real-time.
-This is useful if you have something specific you want to run without running the entire file along with it. For example:
+---
 
-```python
-x = calculate_all_digits_of_pi()
+## 英文版 README / English README
 
-#$end
+### Overview
 
-# I can inspect variables without rerunning calculate_all_digits_of_pi
-# the shortcut is control-enter - the code block should flash yellow.
-print(x) # 3.14......
+Livecode2 for Python brings live coding to VS Code through `space_tracer`. It evaluates the current buffer whenever you type, visualize state changes, and shows errors immediately.
 
-# I can also temporarily change the state of variables
-# note that control-enter will run all adjacent lines of code
-x = math.floor(x)
-print(x) # 3
+### Features
 
-# i only want to do this once I've determined that x is correct
-upload_results_to_s3(x)
-```
+- Live execution with configurable triggers.
+- Rich variable & loop tracing in the webview plus inline diagnostics.
+- Flexible filtering, display placement, and shortcut-driven workflows.
 
-You can also use control-enter to run a block of code outside `#$end`.
+### Python Requirement & Interpreter Discovery
 
-## Credits
+- Python ≥3.5 (3.8+ recommended).
+- Interpreter order: active environment → bundled/`livecode2.pythonPath` → global fallback.
+- Errors are surfaced if no interpreter can be found.
 
-This extension is based on a fork of the awesome [AREPL VSCode extension](https://github.com/Almenon/arepl-vscode) from Almenon.
+### Configuration Cheat Sheet
+
+| Setting | Purpose |
+| --- | --- |
+| `livecode2.whenToExecute`, `livecode2.delay` | Debounce & trigger strategy. |
+| `livecode2.pythonPath`, `livecode2.envFile` | Override interpreter / .env location. |
+| `livecode2.defaultImports` | Inject imports automatically. |
+| `livecode2.printResultPlacement`, `livecode2.show*` | Control UI layout, filtering, and diagnostics. |
+
+### Getting Started
+
+1. Install Python and `space-tracer`.
+2. Install the extension from VSIX or Marketplace.
+3. Open any `.py` file, run the `Livecode2` command, and tweak settings to suit your workflow.
+4. Use the same special markers (`#$save`, `#$end`) and shortcuts (`Ctrl+Enter` / `Cmd+Enter`).
+
+---
+
+## 致谢 / Credits
+
+- **Livecode for Python**：最初版本来自这个扩展，感谢其创新与开源。
+- **wolf 项目**：其在 live coding 方向上的探索启发了我们的设计。
+- **PyCharm Live Coding for Python 插件**：提供了交互与 UX 层面的灵感。
+- 以及 `space_tracer`、`python-shell`、VS Code 团队等所有上游项目的贡献。
+
+---
+
+☕ [Give me a coffee](https://example.com/coffee)
