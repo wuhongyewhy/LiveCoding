@@ -15,6 +15,7 @@ import { PathUtils } from "./env/platform/pathUtils"
 import vscodeUtils from "./vscodeUtilities"
 import { WorkspaceService } from "./env/application/workspace"
 import { Position, Range } from "vscode"
+// fs/os 已不再需要（不再通过 sitecustomize 注入）
 
 /**
  * class with logic for starting live-coding and its preview
@@ -328,12 +329,14 @@ export default class PreviewManager {
     }
 
     /**
-     * run space_tracer on current code and show its textual output
+     * 以“纯代码模式”运行 space_tracer：
+     * - 不创建任何 turtle 画布
+     * - 只使用 space_tracer 的文本 trace 能力
      */
     private runSpaceTracer(pythonPath: string, code: string, filePath: string){
         const workspaceFolder = vscodeUtils.getCurrentWorkspaceFolder(false) || undefined
 
-        // cancel previous trace process
+        // 如已有正在运行的 trace 进程，先终止
         if(this.traceProcess){
             try {
                 this.traceProcess.kill()
@@ -341,12 +344,48 @@ export default class PreviewManager {
             this.traceProcess = null
         }
 
-        const tracedFile = filePath || join(workspaceFolder || "", "untitled.py")
-        const args = ["-m", "space_tracer", "--traced_file", tracedFile]
+        // 通过内联脚本调用 TraceRunner.trace_code，并在脚本内部把 MockTurtle 的
+        // monkey_patch/remove_monkey_patch 替换为 no-op，彻底关闭画图逻辑。
+        const driver = [
+            "import sys",
+            "try:",
+            "    from space_tracer.main import TraceRunner",
+            "    try:",
+            "        from space_tracer import mock_turtle as mt",
+            "",
+            "        def _lc_noop_monkey_patch(*args, **kwargs):",
+            "            # live-coding: disable MockTurtle to avoid GUI requirements",
+            "            return",
+            "",
+            "        def _lc_noop_remove_monkey_patch(*args, **kwargs):",
+            "            # live-coding: no-op cleanup",
+            "            return",
+            "",
+            "        mt.MockTurtle.monkey_patch = _lc_noop_monkey_patch",
+            "        mt.MockTurtle.remove_monkey_patch = _lc_noop_remove_monkey_patch",
+            "    except Exception:",
+            "        # 如果 mock_turtle 不存在，忽略即可（只做文本 trace）",
+            "        pass",
+            "",
+            "    code = sys.stdin.read()",
+            "    runner = TraceRunner()",
+            "    report = runner.trace_code(code)",
+            "    if report is None:",
+            "        report = ''",
+            "    sys.stdout.write(report)",
+            "except Exception as e:",
+            "    # 将异常写入 stderr，方便上层展示",
+            "    sys.stderr.write(str(e))",
+            ""
+        ].join("\n")
+
+        const args = ["-u", "-c", driver]
         const cwd = workspaceFolder || (filePath ? dirname(filePath) : undefined)
+        const env = process.env
+
         const proc = spawn(pythonPath, args, {
             cwd,
-            env: process.env,
+            env,
             stdio: ["pipe", "pipe", "pipe"]
         })
         this.traceProcess = proc
@@ -375,9 +414,8 @@ export default class PreviewManager {
                 this.previewContainer.showTrace(stdout || "(space_tracer 没有输出)")
             } else {
                 const combined = [stdout, stderr].filter(Boolean).join("\n").trim()
-                this.previewContainer.showTrace(
-                    combined || `space_tracer 退出码: ${code}`
-                )
+                const msg = combined || `space_tracer 退出码: ${code}`
+                this.previewContainer.showTrace(msg)
             }
         })
 
