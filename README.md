@@ -1,8 +1,56 @@
+
+## 英文版 README / English README
+
+### Overview
+
+Livecode2 for Python brings live coding to VS Code through `space_tracer`. It evaluates the current buffer whenever you type, visualize state changes, and shows errors immediately.  
+![demo](https://raw.githubusercontent.com/wuhongyewhy/LiveCode/master/livecode_example.png)
+
+### Features
+
+- Live execution with configurable triggers.
+- Rich variable & loop tracing in the webview plus inline diagnostics.
+- Flexible filtering, display placement, and shortcut-driven workflows.
+
+### Python Requirement & Interpreter Discovery
+
+- Python ≥3.8 .
+- Interpreter order: active environment → bundled/`livecode2.pythonPath` → global fallback.
+- Errors are surfaced if no interpreter can be found.
+
+### Configuration Cheat Sheet
+
+| Setting                                                 | Purpose                                        |
+| ------------------------------------------------------- | ---------------------------------------------- |
+| `livecode2.whenToExecute`, `livecode2.delay`        | Debounce & trigger strategy.                   |
+| `livecode2.pythonPath`, `livecode2.envFile`         | Override interpreter / .env location.          |
+| `livecode2.defaultImports`                            | Inject imports automatically.                  |
+| `livecode2.printResultPlacement`, `livecode2.show*` | Control UI layout, filtering, and diagnostics. |
+
+### Getting Started
+
+1. Install Python and `space-tracer`.
+2. Install the extension from VSIX or Marketplace.
+3. Open any `.py` file, run the `Livecode2` command, and tweak settings to suit your workflow.
+
+### Credits
+
+- **Livecode for Python**: the original VS Code extension that Livecode2 forked from.
+- **wolf project**: inspired our ideas on creating a smooth live-coding experience.
+- **PyCharm Live Coding for Python**: provided UX patterns and workflow inspiration.
+- Plus every upstream dependency—`space_tracer`, `python-shell`, the VS Code team, and the community contributors.
+
+## ☕ [Buy me a coffee via PayPal](https://paypal.me/wuhongyewhy)
+## 💚 微信请我喝咖啡：
+![](https://raw.githubusercontent.com/wuhongyewhy/LiveCode/master/weixin2.png)
+
+---
+
 ## 简介 / Introduction
 
 **livecode2 for Python** 是一个 VS Code 扩展，基于 `space_tracer` 实现“所写即所见”的 Python 运行体验。你只需在编辑器中输入代码，Livecode2 就会自动触发 `space_tracer`，把每一行、每一次循环迭代的值变化、异常信息实时渲染在面板中，帮助你快速理解程序行为。
 
-![demo gif](https://raw.githubusercontent.com/wuhongyewhy/LiveCode/master/livecode_example.png)
+![demo](https://raw.githubusercontent.com/wuhongyewhy/LiveCode/master/livecode_example.png)
 
 ---
 
@@ -17,8 +65,7 @@
 
 ## Python 版本要求 / Python Version Requirement
 
-- **最低版本 / Minimum**：Python 3.5。
-- **推荐 / Recommended**：Python 3.8 及以上。
+- **最低版本 / Minimum**：Python 3.8。
 
 Livecode2 会按照以下顺序自动寻找可用的 Python 解释器：
 
@@ -52,47 +99,9 @@ Livecode2 会按照以下顺序自动寻找可用的 Python 解释器：
    - macOS：`Cmd+Shift+A`、`Cmd+Shift+R`
 4. 根据需要调整 `afterDelay`、`onSave` 等触发方式，或修改 `livecode2.pythonPath`。
 
-### 特殊指令 / Special Markers
-
-- `#$save`：跳过后续代码的实时执行，适合长耗时或有副作用的片段。
-- `#$end`：标记实时执行区域的终点，之后的代码仅在手动触发时运行。
-- `Ctrl+Enter` /`Cmd+Enter`：在任意位置运行当前代码块。
 
 ---
 
-## 英文版 README / English README
-
-### Overview
-
-Livecode2 for Python brings live coding to VS Code through `space_tracer`. It evaluates the current buffer whenever you type, visualize state changes, and shows errors immediately.
-
-### Features
-
-- Live execution with configurable triggers.
-- Rich variable & loop tracing in the webview plus inline diagnostics.
-- Flexible filtering, display placement, and shortcut-driven workflows.
-
-### Python Requirement & Interpreter Discovery
-
-- Python ≥3.5 (3.8+ recommended).
-- Interpreter order: active environment → bundled/`livecode2.pythonPath` → global fallback.
-- Errors are surfaced if no interpreter can be found.
-
-### Configuration Cheat Sheet
-
-| Setting                                                 | Purpose                                        |
-| ------------------------------------------------------- | ---------------------------------------------- |
-| `livecode2.whenToExecute`, `livecode2.delay`        | Debounce & trigger strategy.                   |
-| `livecode2.pythonPath`, `livecode2.envFile`         | Override interpreter / .env location.          |
-| `livecode2.defaultImports`                            | Inject imports automatically.                  |
-| `livecode2.printResultPlacement`, `livecode2.show*` | Control UI layout, filtering, and diagnostics. |
-
-### Getting Started
-
-1. Install Python and `space-tracer`.
-2. Install the extension from VSIX or Marketplace.
-3. Open any `.py` file, run the `Livecode2` command, and tweak settings to suit your workflow.
-4. Use the same special markers (`#$save`,`#$end`) and shortcuts (`Ctrl+Enter` /`Cmd+Enter`).
 
 ---
 
@@ -103,7 +112,8 @@ Livecode2 for Python brings live coding to VS Code through `space_tracer`. It ev
 - **PyCharm Live Coding for Python 插件**：提供了交互与 UX 层面的灵感。
 - 以及 `space_tracer`、`python-shell`、VS Code 团队等所有上游项目的贡献。
 
-## ☕ [Coffee via PayPal](https://paypal.me/wuhongyewhy)
-💚 微信请我喝咖啡：
 
-![](weixin2.png)
+## ☕ [Buy me a coffee via PayPal](https://paypal.me/wuhongyewhy)
+## 💚 微信请我喝咖啡：
+
+![](https://raw.githubusercontent.com/wuhongyewhy/LiveCode/master/weixin2.png)
