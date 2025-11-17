@@ -2,7 +2,7 @@
   "name": "livecode2",
   "displayName": "livecode2 for python",
   "description": "Real-time python evaluation (space_tracer driven)",
-  "version": "1.4.0",
+  "version": "2.1.0",
   "publisher": "wuhy",
   "engines": {
     "vscode": ">=1.105.0",
