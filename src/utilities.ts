@@ -4,24 +4,24 @@
 // no idea how to type this crap
 export class DefaultDict {
     constructor(defaultInit) {
-      return new Proxy({}, {
-        get: (target, name) => name in target ?
-          target[name] :
-          (target[name] = typeof defaultInit === 'function' ?
-            new defaultInit().valueOf() :
-            defaultInit)
-      })
+        return new Proxy({}, {
+            get: (target, name) => name in target ?
+                target[name] :
+                (target[name] = typeof defaultInit === 'function' ?
+                    new defaultInit().valueOf() :
+                    defaultInit)
+        })
     }
 }
 
 export default class Utilities {
-    
+
     /**
      * note that this returns true if obj evaluates to false. 
      * (For example, of obj is null)
      */
     static isEmpty(obj: {}) {
-        if(!obj) return true
+        if (!obj) return true
         return Object.keys(obj).length === 0;
     }
 
@@ -30,10 +30,10 @@ export default class Utilities {
      * @param object returns empty list if null/undefined object
      * @param key assumes key is same throughout
      */
-    static flattenNestedObject<T>(object: T, key: string){
-        const objects:T[] = []
+    static flattenNestedObject<T>(object: T, key: string) {
+        const objects: T[] = []
 
-        while(object != null){
+        while (object != null) {
             objects.push(object)
             object = object[key]
         }
@@ -46,16 +46,16 @@ export default class Utilities {
      * @param object returns empty list if null/undefined object
      * @param key object will be transversed using first non-null key
      */
-    static flattenNestedObjectWithMultipleKeys<T>(object: T, keys: string[]){
-        const objects:T[] = []
+    static flattenNestedObjectWithMultipleKeys<T>(object: T, keys: string[]) {
+        const objects: T[] = []
 
-        while(object != null){
+        while (object != null) {
             objects.push(object)
 
             let innerObject;
             for (let index = 0; index < keys.length; index++) {
                 innerObject = object[keys[index]];
-                if(innerObject) break
+                if (innerObject) break
             }
 
             object = innerObject
@@ -66,38 +66,54 @@ export default class Utilities {
 
     static sleep(ms: number): Promise<void> {
         return new Promise(resolve => {
-          setTimeout(resolve, ms)
+            setTimeout(resolve, ms)
         })
     }
 
     /**
      * returns trimmed last line (split by \n)
      */
-    static getLastLine(input: string){
+    static getLastLine(input: string) {
         // even on windows python uses newline :/
         // not sure if it's just my python setup?
         return input.slice(input.lastIndexOf('\n')).trim()
     }
-      
+
     /**
      * see https://stackoverflow.com/a/12034334/6629672
      * @param string
      */
     static escapeHtml(input: string) {
         if (input == null) return null;
-        return input.replace(/[&<>"'`=\/]/g, function(s) {
+        return input.replace(/[&<>"'`\/]/g, function (s) {
             return Utilities.entityMap[s];
         });
     }
-    
+
+    static unescapeHtml(input: string) {
+        if (input == null) return null;
+        return input.replace(/&(quot|amp|#39|lt|gt|#x2F|#x60);/g, function (s) {
+            return Utilities.inverseEntityMap[s];
+        });
+    }
+
     private static entityMap = {
         '"': "&quot;",
         "&": "&amp;",
         "'": "&#39;",
         "/": "&#x2F;",
         "<": "&lt;",
-        "=": "&#x3D;",
         ">": "&gt;",
         "`": "&#x60;",
+    };
+
+    private static inverseEntityMap = {
+        "&quot;": '"',
+        "&amp;": "&",
+        "&#39;": "'",
+        "&#x2F;": "/",
+        "&lt;": "<",
+        "&gt;": ">",
+        "&#x60;": "`",
     };
 }

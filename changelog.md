@@ -1,4 +1,8 @@
 
+### 3.0
+
+Refactored output to HTML table format for better alignment.
+
 ### 2.1.3
 
 Fixed the issue where the output was empty in some cases.

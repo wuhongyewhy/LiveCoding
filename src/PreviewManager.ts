@@ -8,7 +8,7 @@ import { spawn, ChildProcess } from "child_process"
 import { PreviewContainer } from "./previewContainer"
 import Reporter from "./telemetry"
 import { PythonShell } from "python-shell"
-import {settings} from "./settings"
+import { settings } from "./settings"
 import printDir from "./printDir";
 import { PlatformService } from "./env/platform/platformService"
 import { PathUtils } from "./env/platform/pathUtils"
@@ -52,7 +52,7 @@ export default class PreviewManager {
         })
     }
 
-    async loadAndWatchEnvVars(){
+    async loadAndWatchEnvVars() {
         const platformService = new PlatformService()
         const envVarsService = new EnvironmentVariablesService(new PathUtils(platformService.isWindows))
         const workspaceService = new WorkspaceService()
@@ -64,14 +64,14 @@ export default class PreviewManager {
         return e.getEnvironmentVariables(livecode2Utils.getEnvFilePath(), vscodeUtils.getCurrentWorkspaceFolderUri())
     }
 
-    async startlivecode(){
+    async startlivecode() {
         // see https://github.com/Microsoft/vscode/issues/46445
         vscode.commands.executeCommand("setContext", "live-coding", true)
 
         // reload reporter (its disposed when live-coding is closed)
         this.reporter = new Reporter(settings().get<boolean>("telemetry"))
 
-        if(!vscode.window.activeTextEditor){
+        if (!vscode.window.activeTextEditor) {
             vscode.window.showErrorMessage("no active text editor open")
             return
         }
@@ -81,7 +81,7 @@ export default class PreviewManager {
         // var tt = new vscode.Range(100,0,101,0)
         // console.log(tt)
         // this.pythonEditor.revealRange(tt, 3)
-        
+
         // vscode.onDidChangeTextEditorVisibleRanges()
         // needs window not editor, look at github example of use of event
         // this.subscriptions.push(
@@ -91,28 +91,28 @@ export default class PreviewManager {
         // )
         this.pythonEditorDoc = this.pythonEditor.document
         this.previewContainer.setActiveDocument(this.pythonEditorDoc)
-        
+
 
         let panel = this.previewContainer.start(basename(this.pythonEditorDoc.fileName));
-        panel.onDidDispose(()=>this.dispose(), this, this.subscriptions)
+        panel.onDidDispose(() => this.dispose(), this, this.subscriptions)
         this.subscriptions.push(panel)
 
         panel.webview.onDidReceiveMessage(async (msg) => {
-            if(msg?.command === "install-space-tracer"){
+            if (msg?.command === "install-space-tracer") {
                 await this.installSpaceTracer();
             }
         }, undefined, this.subscriptions)
 
         // only space_tracer is used now – no AREPL backend startup
 
-        if(this.pythonEditorDoc.isUntitled && this.pythonEditorDoc.getText() == "") {
+        if (this.pythonEditorDoc.isUntitled && this.pythonEditorDoc.getText() == "") {
             await livecode2Utils.insertDefaultImports(this.pythonEditor)
             // waiting for this to complete so i dont accidentily trigger
             // the edit doc handler when i insert imports
         }
 
         this.subscribeHandlersToDoc()
-        
+
 
         // function resolveAfter2Seconds() {
         //     return new Promise(resolve => {
@@ -121,14 +121,14 @@ export default class PreviewManager {
         //       }, 2000);
         //     });
         //   }
-          
+
         //   async function asyncCall() {
         //     const result = await resolveAfter2Seconds();
 
         // async function littleadd(){
         //     this.pythonEditor.edit((builder) => {
         //         builder.insert(new vscode.Position(0,0 ), "    ");
-                
+
         //     });
         //     return;
         // }
@@ -136,34 +136,34 @@ export default class PreviewManager {
 
         var lc = this.pythonEditorDoc.lineCount
 
-        var lastline_text = this.pythonEditorDoc.lineAt(lc -1)
+        var lastline_text = this.pythonEditorDoc.lineAt(lc - 1)
 
         var lastline_end = lastline_text.text.length
 
         if (lc > 1 || lastline_end > 0) {
 
 
-        
+
 
             this.pythonEditor.edit((builder) => {
-                
-                builder.insert(new vscode.Position(lc - 1, lastline_end ), "\n");
+
+                builder.insert(new vscode.Position(lc - 1, lastline_end), "\n");
 
             });
 
-            
-        //             this.pythonEditor.edit((remover) => {
-        //     // builder.delete(new vscode.Range(new vscode.Position(lc -1 ,lastline_end - 1 ), new vscode.Position(lc -1 ,lastline_end + 1 )));
-        //     // builder.delete(new vscode.Range(new vscode.Position(78 ,0 ), new vscode.Position(79, 0 )));
-        //     var nrange = new vscode.Range( 78,0,78,2)
-        //     console.log(nrange)
-        //     remover.delete(nrange);
-        // });
+
+            //             this.pythonEditor.edit((remover) => {
+            //     // builder.delete(new vscode.Range(new vscode.Position(lc -1 ,lastline_end - 1 ), new vscode.Position(lc -1 ,lastline_end + 1 )));
+            //     // builder.delete(new vscode.Range(new vscode.Position(78 ,0 ), new vscode.Position(79, 0 )));
+            //     var nrange = new vscode.Range( 78,0,78,2)
+            //     console.log(nrange)
+            //     remover.delete(nrange);
+            // });
 
 
         }
         // //   }
-        
+
         // // asyncCall()
 
         // const secondFunction = async () => {
@@ -182,8 +182,8 @@ export default class PreviewManager {
         return panel
     }
 
-    runlivecode(){
-        if(this.pythonEditorDoc){
+    runlivecode() {
+        if (this.pythonEditorDoc) {
             void this.runSpaceTracerForDoc(this.pythonEditorDoc)
         }
     }
@@ -193,11 +193,11 @@ export default class PreviewManager {
      * ex: x=1; print(x)
      * Then runs it
      */
-    printDir(){
+    printDir() {
 
-        if(this.pythonEditor != vscode.window.activeTextEditor) return
+        if (this.pythonEditor != vscode.window.activeTextEditor) return
         const selection = this.pythonEditor.selection
-        if(!selection.isSingleLine) return
+        if (!selection.isSingleLine) return
         let codeLines = this.pythonEditor.document.getText()
 
         let codeLinesArr = printDir(codeLines.split(vscodeUtils.eol(this.pythonEditor.document)), selection.start.line)
@@ -205,7 +205,7 @@ export default class PreviewManager {
     }
 
     runlivecodeBlock() {
-        if(this.pythonEditorDoc){
+        if (this.pythonEditorDoc) {
             void this.runSpaceTracerForDoc(this.pythonEditorDoc)
         }
     }
@@ -217,11 +217,11 @@ export default class PreviewManager {
         this.disposable.dispose();
 
         this.runningStatus.dispose();
-        
+
         this.reporter.sendFinishedEvent(settings())
         this.reporter.dispose();
 
-        if(vscode.window.activeTextEditor){
+        if (vscode.window.activeTextEditor) {
             vscode.window.activeTextEditor.setDecorations(this.previewContainer.errorDecorationType, [])
         }
     }
@@ -229,30 +229,30 @@ export default class PreviewManager {
     /**
      * show err message to user if outdated version of python
      */
-    private warnIfOutdatedPythonVersion(pythonPath: string){
-        PythonShell.getVersion(`"${pythonPath}"`).then((out)=>{
+    private warnIfOutdatedPythonVersion(pythonPath: string) {
+        PythonShell.getVersion(`"${pythonPath}"`).then((out) => {
             let version = out.stdout ? out.stdout : out.stderr
-            if(version?.includes("Python 3.4") || version?.includes("Python 2")){
+            if (version?.includes("Python 3.4") || version?.includes("Python 2")) {
                 vscode.window.showErrorMessage(`live-coding does not support ${version}.
                 Please upgrade or set live-coding.pythonPath to a diffent python.
                 live-coding needs python 3.5 or greater`)
             }
-            if(version){
+            if (version) {
                 this.reporter.pythonVersion = version.trim()
             }
-        }).catch((err: NodeJS.ErrnoException)=>{
+        }).catch((err: NodeJS.ErrnoException) => {
             // if we get spawn error here thats already reported by telemetry
             // so we skip telemetry reporting for this error
             console.error(err)
-            if(err.message.includes("Python was not found but can be installed from the Microsoft Store")){
+            if (err.message.includes("Python was not found but can be installed from the Microsoft Store")) {
                 vscode.window.showErrorMessage(err.message)
             }
         })
     }
 
     private ensureSpaceTracerAvailable(pythonPath: string): Promise<boolean> {
-        if(this.spaceTracerChecked && this.spaceTracerAvailable) return Promise.resolve(true)
-        if(this.installingSpaceTracer) return Promise.resolve(false)
+        if (this.spaceTracerChecked && this.spaceTracerAvailable) return Promise.resolve(true)
+        if (this.installingSpaceTracer) return Promise.resolve(false)
 
         return new Promise<boolean>((resolve) => {
             const checkProc = spawn(pythonPath, ["-c", "import importlib.util, sys; sys.exit(0 if importlib.util.find_spec('space_tracer') else 1)"], {
@@ -263,7 +263,7 @@ export default class PreviewManager {
             checkProc.on("close", (code) => {
                 this.spaceTracerChecked = true
                 this.spaceTracerAvailable = code === 0
-                if(!this.spaceTracerAvailable){
+                if (!this.spaceTracerAvailable) {
                     this.previewContainer.pythonPanelPreview.showSpaceTracerInstallPrompt(
                         `未检测到 space_tracer。点击下方按钮使用当前 Python (${pythonPath}) 安装。`
                     )
@@ -282,13 +282,13 @@ export default class PreviewManager {
         })
     }
 
-    private async installSpaceTracer(){
-        if(this.installingSpaceTracer) return
+    private async installSpaceTracer() {
+        if (this.installingSpaceTracer) return
         const pythonPath = livecode2Utils.getPythonPath()
         this.installingSpaceTracer = true
         this.runningStatus.text = "Installing space_tracer..."
         this.runningStatus.show()
-        this.previewContainer.showTrace("正在安装 space_tracer ...")
+        this.previewContainer.showTrace("正在安装 space_tracer ...", "", "")
 
         await new Promise<void>((resolve) => {
             const proc = spawn(pythonPath, ["-m", "pip", "install", "space_tracer"], {
@@ -305,16 +305,16 @@ export default class PreviewManager {
             proc.on("close", async (code) => {
                 this.installingSpaceTracer = false
                 this.runningStatus.hide()
-                if(code === 0){
+                if (code === 0) {
                     this.spaceTracerChecked = true
                     this.spaceTracerAvailable = true
-                    this.previewContainer.showTrace("space_tracer 安装完成，正在重新运行…")
-                    if(this.pythonEditorDoc){
+                    this.previewContainer.showTrace("space_tracer 安装完成，正在重新运行…", "", pythonPath)
+                    if (this.pythonEditorDoc) {
                         await this.runSpaceTracerForDoc(this.pythonEditorDoc)
                     }
                 } else {
                     const msg = [stdout, stderr].filter(Boolean).join("\n").trim() || `pip 退出码 ${code}`
-                    this.previewContainer.showTrace(`space_tracer 安装失败：\n${msg}`)
+                    this.previewContainer.showTrace(`space_tracer 安装失败：\n${msg}`, "", "")
                 }
                 resolve()
             })
@@ -322,7 +322,7 @@ export default class PreviewManager {
             proc.on("error", err => {
                 this.installingSpaceTracer = false
                 this.runningStatus.hide()
-                this.previewContainer.showTrace(`启动 pip 失败：${err instanceof Error ? err.message : String(err)}`)
+                this.previewContainer.showTrace(`启动 pip 失败：${err instanceof Error ? err.message : String(err)}`, "", "")
                 resolve()
             })
         })
@@ -333,14 +333,14 @@ export default class PreviewManager {
      * - 不创建任何 turtle 画布
      * - 只使用 space_tracer 的文本 trace 能力
      */
-    private runSpaceTracer(pythonPath: string, code: string, filePath: string){
+    private runSpaceTracer(pythonPath: string, sourceCode: string, filePath: string) {
         const workspaceFolder = vscodeUtils.getCurrentWorkspaceFolder(false) || undefined
 
         // 如已有正在运行的 trace 进程，先终止
-        if(this.traceProcess){
+        if (this.traceProcess) {
             try {
                 this.traceProcess.kill()
-            } catch {}
+            } catch { }
             this.traceProcess = null
         }
 
@@ -400,8 +400,8 @@ export default class PreviewManager {
         })
         this.traceProcess = proc
 
-        if(proc.stdin){
-            proc.stdin.write(code)
+        if (proc.stdin) {
+            proc.stdin.write(sourceCode)
             proc.stdin.end()
         }
 
@@ -416,31 +416,31 @@ export default class PreviewManager {
         })
 
         proc.on("close", code => {
-            if(this.traceProcess !== proc) return  // newer run started
+            if (this.traceProcess !== proc) return  // newer run started
             this.traceProcess = null
             this.runningStatus.hide()
 
-            if(code === 0){
-                this.previewContainer.showTrace(stdout || "(space_tracer 没有输出)")
+            if (code === 0) {
+                this.previewContainer.showTrace(stdout || "(space_tracer 没有输出)", sourceCode, pythonPath)
             } else {
                 const combined = [stdout, stderr].filter(Boolean).join("\n").trim()
                 const msg = combined || `space_tracer 退出码: ${code}`
-                this.previewContainer.showTrace(msg)
+                this.previewContainer.showTrace(msg, "", "")
             }
         })
 
         proc.on("error", err => {
             const msg = err instanceof Error ? err.message : String(err)
             this.runningStatus.hide()
-            this.previewContainer.showTrace(`启动 space_tracer 失败: ${msg}`)
+            this.previewContainer.showTrace(`启动 space_tracer 失败: ${msg}`, "", "")
         })
     }
 
     private change_line_view() {
         const editor = vscode.window.activeTextEditor
-        if(!editor || editor.visibleRanges.length === 0) return
+        if (!editor || editor.visibleRanges.length === 0) return
         const panel = this.previewContainer?.pythonPanelPreview?.panel
-        if(!panel || panel.webview === undefined) return
+        if (!panel || panel.webview === undefined) return
 
         const curline = editor.visibleRanges[0].start.line
         panel.webview.postMessage({ line: curline })
@@ -450,26 +450,26 @@ export default class PreviewManager {
     /**
      * binds various funcs to activate upon edit of document / switching of active doc / etc...
      */
-    private subscribeHandlersToDoc(){
+    private subscribeHandlersToDoc() {
 
-        if(settings().get<boolean>("skipLandingPage")){
-            if(this.pythonEditorDoc){
+        if (settings().get<boolean>("skipLandingPage")) {
+            if (this.pythonEditorDoc) {
                 void this.runSpaceTracerForDoc(this.pythonEditorDoc)
             }
         }
 
-        
+
         vscode.workspace.onDidSaveTextDocument((e) => {
-            if(settings().get<string>("whenToExecute") == "onSave"){
+            if (settings().get<string>("whenToExecute") == "onSave") {
                 void this.runSpaceTracerForDoc(e)
             }
         }, this, this.subscriptions)
-        
+
         vscode.workspace.onDidChangeTextDocument((e) => {
             const cachedSettings = settings()
-            if(cachedSettings.get<string>("whenToExecute") == "afterDelay"){
+            if (cachedSettings.get<string>("whenToExecute") == "afterDelay") {
                 let delay = cachedSettings.get<number>("delay");
-                if(this.changeTimer){
+                if (this.changeTimer) {
                     clearTimeout(this.changeTimer)
                 }
                 this.changeTimer = setTimeout(() => {
@@ -477,17 +477,17 @@ export default class PreviewManager {
                 }, delay)
             }
         }, this, this.subscriptions)
-        
-        
 
-            vscode.window.onDidChangeTextEditorVisibleRanges((event) => {
 
-            
+
+        vscode.window.onDidChangeTextEditorVisibleRanges((event) => {
+
+
             this.change_line_view();
 
 
-            },this, this.subscriptions )
-            
+        }, this, this.subscriptions)
+
 
 
 
@@ -500,33 +500,33 @@ export default class PreviewManager {
 
 
         vscode.workspace.onDidCloseTextDocument((e) => {
-            if(e == this.pythonEditorDoc) this.dispose()
+            if (e == this.pythonEditorDoc) this.dispose()
         }, this, this.subscriptions)
-    
-    
-    
-    
-    
-    
-    
-    
-    
+
+
+
+
+
+
+
+
+
     }
 
 
-    private onAnyDocChange(event: vscode.TextDocument){
-        if(event == this.pythonEditorDoc){
+    private onAnyDocChange(event: vscode.TextDocument) {
+        if (event == this.pythonEditorDoc) {
 
             this.reporter.numRuns += 1
 
             const text = event.getText()
 
             let filePath = ""
-            if(this.pythonEditorDoc.isUntitled){
+            if (this.pythonEditorDoc.isUntitled) {
                 /* user would assume untitled file is in same dir as workspace root */
                 filePath = join(vscodeUtils.getCurrentWorkspaceFolder(false), this.pythonEditorDoc.fileName)
             }
-            else{
+            else {
                 filePath = this.pythonEditorDoc.fileName
             }
 
@@ -534,17 +534,17 @@ export default class PreviewManager {
                 var curline = this.pythonEditor.visibleRanges[0].start.line;
                 this.previewContainer.pythonPanelPreview.startrange = curline;
                 const codeRan = this.tolivecodeLogic.onUserInput(text, filePath, vscodeUtils.eol(event), settings().get<boolean>('showGlobalVars'))
-                if(codeRan) {
-                     this.runningStatus.show();
-                    
+                if (codeRan) {
+                    this.runningStatus.show();
 
 
 
-                    }
+
+                }
 
             } catch (error) {
-                if(error instanceof Error){
-                    if(error.message == "unsafeKeyword"){
+                if (error instanceof Error) {
+                    if (error.message == "unsafeKeyword") {
                         const unsafeKeywords = settings().get<string[]>('unsafeKeywords')
                         this.previewContainer.updateError(null, `unsafe keyword detected. 
 Doing irreversible operations like deleting folders is very dangerous in a live editor. 
@@ -552,27 +552,27 @@ If you want to continue please clear live-coding.unsafeKeywords setting.
 Currently live-coding.unsafeKeywords is set to ["${unsafeKeywords.join('", "')}"]`, true)
                         return
                     }
-                    else{
+                    else {
                         console.error(error)
                         this.reporter.sendError(error)
-                        this.previewContainer.updateError(null, `internal livecode error: ${error.name} stack: ${error.stack}`, true) 
+                        this.previewContainer.updateError(null, `internal livecode error: ${error.name} stack: ${error.stack}`, true)
                     }
                 }
                 throw error;
             }
-        }        
+        }
     }
-    private async runSpaceTracerForDoc(doc: vscode.TextDocument){
-        if(!this.pythonEditorDoc || doc !== this.pythonEditorDoc) return
+    private async runSpaceTracerForDoc(doc: vscode.TextDocument) {
+        if (!this.pythonEditorDoc || doc !== this.pythonEditorDoc) return
 
         const text = doc.getText()
 
         let filePath = ""
-        if(doc.isUntitled){
+        if (doc.isUntitled) {
             /* user would assume untitled file is in same dir as workspace root */
             filePath = join(vscodeUtils.getCurrentWorkspaceFolder(false), doc.fileName)
         }
-        else{
+        else {
             filePath = doc.fileName
         }
 
@@ -581,11 +581,12 @@ Currently live-coding.unsafeKeywords is set to ["${unsafeKeywords.join('", "')}"
         this.runningStatus.text = "Running space_tracer..."
         this.runningStatus.show();
         const pythonPath = livecode2Utils.getPythonPath()
-        const hasSpaceTracer = await this.ensureSpaceTracerAvailable(pythonPath)
-        if(!hasSpaceTracer){
+        const resolvedPythonPath = livecode2Utils.resolvePythonPath(pythonPath)
+        const hasSpaceTracer = await this.ensureSpaceTracerAvailable(resolvedPythonPath)
+        if (!hasSpaceTracer) {
             this.runningStatus.hide()
             return
         }
-        this.runSpaceTracer(pythonPath, text, filePath)
+        this.runSpaceTracer(resolvedPythonPath, text, filePath)
     }
 }

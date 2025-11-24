@@ -2,7 +2,7 @@
   "name": "live-coding",
   "displayName": "live coding for python",
   "description": "Real-time python evaluation (space_tracer driven)",
-  "version": "2.1.3",
+  "version": "3.0.0",
   "publisher": "wuhy",
   "engines": {
     "vscode": "^1.80.0",
