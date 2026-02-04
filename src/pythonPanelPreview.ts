@@ -19,21 +19,22 @@ export default class PythonPanelPreview {
     private lastTime: number = 999999999;
 
     public html;
+    private evaluationWhileYouType = "<p>evaluation while you type can be turned off or adjusted in the settings</p>"
 
     private readonly landingPage = `<br>
     <p style="font-size:14px">Start typing or make a change and your code will be evaluated.</p>
-    
+    <p style="font-size:14px">你的代码被编辑后才会有执行结果输出</p>    
     <p style="font-size:14px">⚠ <b style="color:red">WARNING:</b> code is evaluated WHILE YOU TYPE - don't try deleting files/folders! ⚠</p>
-    <p>evaluation while you type can be turned off or adjusted in the settings</p>
     <br>
     
     <h3>Examples</h3>
     
-    <h4>Simple List</h4>
+    <h4>Simple Dictionary</h4>
     <code style="white-space:pre-wrap">
-    x = [1,2,3]
-    y = [num*2 for num in x]
-    print(y)
+    d = {'a':1,'b':2,'c':3}
+    d['d'] = 4 # only show d['d'] = 4 只显示修改的那一项
+    d = d # force to show the whole d 强制输出d的全部内容
+    print(d['a'])
     </code>
     
     <h4>Web call</h4>

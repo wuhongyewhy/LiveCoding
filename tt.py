@@ -1,7 +1,4 @@
-a = 8
-for i in range(a):
-    if i%2==0:
-        continue
-    a += i
-
-print(a)
+d = {'a':1,'b':2,'c':3}
+d['d'] = 4 
+d = d 
+print(d['a'])
