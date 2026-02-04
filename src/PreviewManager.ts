@@ -140,28 +140,11 @@ export default class PreviewManager {
 
         var lastline_end = lastline_text.text.length
 
-        if (lc > 1 || lastline_end > 0) {
-
-
-
-
-            this.pythonEditor.edit((builder) => {
-
-                builder.insert(new vscode.Position(lc - 1, lastline_end), "\n");
-
-            });
-
-
-            //             this.pythonEditor.edit((remover) => {
-            //     // builder.delete(new vscode.Range(new vscode.Position(lc -1 ,lastline_end - 1 ), new vscode.Position(lc -1 ,lastline_end + 1 )));
-            //     // builder.delete(new vscode.Range(new vscode.Position(78 ,0 ), new vscode.Position(79, 0 )));
-            //     var nrange = new vscode.Range( 78,0,78,2)
-            //     console.log(nrange)
-            //     remover.delete(nrange);
-            // });
-
-
-        }
+        // if (lc > 1 || lastline_end > 0) {
+        //     this.pythonEditor.edit((builder) => {
+        //         builder.insert(new vscode.Position(lc - 1, lastline_end), "\n");
+        //     });
+        // }
         // //   }
 
         // // asyncCall()

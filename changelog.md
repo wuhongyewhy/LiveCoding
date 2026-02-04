@@ -1,3 +1,7 @@
+### 3.1
+
+Added a horizontal scrollbar to the result display, while the source code column remains sticky during horizontal scrolling.
+水平滚动界面改进
 
 ### 3.0
 
@@ -15,6 +19,6 @@ Add space_tracer installation button
 
 renamed to live coding
 
-### 2.1 
+### 2.1
 
 init release

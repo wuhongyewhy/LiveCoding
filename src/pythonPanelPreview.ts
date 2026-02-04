@@ -245,7 +245,7 @@ export default class PythonPanelPreview {
         // Each element is a stack of { color, colspan } representing active scopes
         // const gridColumnState: { color: string, colspan: number }[][] = [];
 
-        let html = `
+        let html = `<div style="overflow-x: auto;">
         <table class="trace-table" style="width:100%; border-collapse: collapse; border: 1px solid #ccc;">`;
 
         for (let i = 0; i < codeLines.length; i++) {
@@ -253,7 +253,7 @@ export default class PythonPanelPreview {
             const traceLine = i < traceLines.length ? traceLines[i] : "";
 
             html += '<tr>';
-            html += `<td class="code-col" style="white-space: pre; border-right: 1px solid #ccc; border-bottom: 1px solid #ccc; padding: 0; vertical-align: top; background-color: #f5f5f5; display: ${sourceDisplay}; background-clip: border-box;"><div style="padding: 5px">${Utilities.escapeHtml(codeLine)}</div></td>`;
+            html += `<td class="code-col" style="white-space: pre; border-right: 1px solid #ccc; border-bottom: 1px solid #ccc; padding: 0; vertical-align: top; background-color: #f5f5f5; display: ${sourceDisplay}; background-clip: border-box; position: sticky; left: 0; z-index: 10;"><div style="padding: 5px">${Utilities.escapeHtml(codeLine)}</div></td>`;
 
             let currentIdx = 0;
             let colSpan = 1;
@@ -304,7 +304,7 @@ export default class PythonPanelPreview {
             html += '</tr>';
         }
 
-        html += '</table>';
+        html += '</table></div>';
         html += `<div id="debug-output" style="display: ${debugDisplay}; margin-top: 20px; padding: 10px; background-color: #eee; border: 1px solid #999; white-space: pre-wrap; font-family: monospace;"><h3>Raw Trace Output:</h3>${Utilities.escapeHtml(trace)}</div>`;
 
         // Footer with Python Path and Options
