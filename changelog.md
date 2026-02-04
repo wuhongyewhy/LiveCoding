@@ -1,6 +1,6 @@
 ### 3.1
 
-Added a horizontal scrollbar to the result display, while the source code column remains sticky during horizontal scrolling.
+Horizontal scrolling UI improvements
 水平滚动界面改进
 
 ### 3.0
