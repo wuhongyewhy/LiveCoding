@@ -1,4 +1,4 @@
-d = {'a':1,'b':2,'c':3}
-d['d'] = 4 
-d = d 
-print(d['a'])
+tot = 0
+for i in range(10):
+    tot += i
+print(tot)
